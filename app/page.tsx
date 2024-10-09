@@ -149,10 +149,11 @@ export default function Page() {
 
     const isCurrent = dayjs().isBetween(booking.initialTime, booking.endTime);
 
-    const isNext = dayjs().isBetween(
-      dayjs(booking.initialTime),
-      dayjs(booking.initialTime).subtract(2, "hours")
-    );
+    const isNext =
+      dayjs().isBetween(
+        dayjs(booking.initialTime),
+        dayjs(booking.initialTime).subtract(2, "hours")
+      ) && dayjs(booking.date).isSame(dayjs(), "day");
 
     const showChip = isCurrent || isNext;
 
@@ -173,6 +174,7 @@ export default function Page() {
             <Paper
               sx={{
                 bgcolor: "primary.main",
+                color: "white",
               }}
               className="flex flex-col p-4 rounded-md text-white w-full"
               id={booking.id}
@@ -201,6 +203,7 @@ export default function Page() {
           sx={{
             bgcolor: "primary.main",
             filter: `brightness(${isPast ? 0.5 : 1})`,
+            color: "white",
           }}
           className="flex flex-col p-4 rounded-md text-white w-full"
           id={booking.id}
