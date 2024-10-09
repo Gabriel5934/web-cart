@@ -16,11 +16,7 @@ import {
 import { ChangeEvent, useEffect, useState } from "react";
 import { Formik, FormikProps } from "formik";
 import { object, string } from "yup";
-import {
-  LocalizationProvider,
-  MobileDatePicker,
-  MobileTimePicker,
-} from "@mui/x-date-pickers";
+import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
 import dayjs, { Dayjs } from "dayjs";
@@ -41,7 +37,6 @@ import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br";
-import _ from "lodash";
 
 interface Inputs {
   device: string;
@@ -49,6 +44,7 @@ interface Inputs {
   partner: string;
   place: string;
   date: Dayjs | null;
+  timeString: string;
   initialTime: Dayjs | null;
   endTime: Dayjs | null;
 }
@@ -81,17 +77,30 @@ dayjs.extend(isBetween);
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
 
+const OPENINGS = [
+  "06:00 - 08:00",
+  "08:00 - 10:00",
+  "10:00 - 12:00",
+  "13:00 - 15:00",
+  "15:00 - 17:00",
+  "19:00 - 21:00",
+];
+
+const PLACES = [
+  "Portaria 14 Bis",
+  "Feira Santa Clara",
+  "Praça Romão Gomes",
+  "Parque Ribeirão Vermelho",
+  "Feira do Urbanova",
+];
+
+const DEVICES = ["Carrinho 1", "Carrinho 2 (Vicentina)", "Display"];
+
 export default function Page() {
   const router = useRouter();
   const [showBackdrop, setShowBackdrop] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [bookings, setBookings] = useState<Array<Booking>>([]);
-  const [blockingInitialBookings, setBlockingInitialBooking] =
-    useState<string>();
-
-  const places = ["14 Bis", "Ribeirão Vermelho", "Itaú", "Feira do Urbanova"];
-
-  const devices = ["Carrinho Geral", "Carrinho Vicentina", "Display"];
 
   const closeSnackbar = () => setSnackbarOpen(false);
 
@@ -124,14 +133,7 @@ export default function Page() {
     partner: string().required(requiredMessage),
     place: string().required(requiredMessage),
     date: string().required(requiredMessage),
-    initialTime: string().required(requiredMessage),
-    endTime: string()
-      .required(requiredMessage)
-      .test(
-        "available",
-        () => "",
-        () => !Boolean(blockingInitialBookings)
-      ),
+    timeString: string().required(requiredMessage),
   });
 
   const CustomTextField = (props: {
@@ -173,21 +175,25 @@ export default function Page() {
     options: Array<string>;
     disabled?: boolean;
     value?: string;
-    shouldCheckTime?: boolean;
+    checkForVicentina?: boolean;
   }) => {
-    const { formik, field, label, options, disabled, value, shouldCheckTime } =
-      props;
+    const {
+      formik,
+      field,
+      label,
+      options,
+      disabled,
+      value,
+      checkForVicentina,
+    } = props;
 
-    const handleChange = (_e: unknown, value: string | null) => {
-      formik.setFieldValue(field, value);
+    const updatePlace = (newDevice: string) => {
+      if (!checkForVicentina) return;
 
-      if (shouldCheckTime) {
-        checkAvailability(
-          value ?? "",
-          formik.values.date,
-          formik.values.initialTime,
-          formik.values.endTime
-        );
+      if (newDevice === "Carrinho 2 (Vicentina)") {
+        formik.setFieldValue("place", "Vicentina Aranha");
+      } else if (formik.values.place === "Vicentina Aranha") {
+        formik.setFieldValue("place", "");
       }
     };
 
@@ -205,42 +211,13 @@ export default function Page() {
           />
         )}
         value={value ?? (formik.values[field] as string)}
-        onChange={handleChange}
+        onChange={(_e, value) => {
+          formik.setFieldValue(field, value);
+          updatePlace(value ?? "");
+        }}
         disabled={disabled ?? false}
       />
     );
-  };
-
-  const checkAvailability = (
-    device: string,
-    date: Dayjs | null,
-    initialTime: Dayjs | null,
-    endTime: Dayjs | null
-  ) => {
-    if (!initialTime || !endTime || !date) return;
-
-    const currentDayBookings = bookings.filter((booking) =>
-      dayjs(booking.date).isSame(date, "day")
-    );
-    const currentDeviceBookings = currentDayBookings.filter(
-      (booking) => booking.device === device
-    );
-    const orderByTime = _.orderBy(currentDeviceBookings, "initialTime");
-    const bookedTimes = orderByTime
-      .map((booking) => [booking.initialTime, booking.endTime])
-      .flat();
-
-    const overlaps = bookedTimes.filter((time) =>
-      dayjs(time).isBetween(initialTime, endTime)
-    );
-
-    if (overlaps[0]) {
-      setBlockingInitialBooking(
-        `Já existe uma reserva às ${dayjs(overlaps[0]).format("HH:mm")}`
-      );
-    } else {
-      setBlockingInitialBooking(undefined);
-    }
   };
 
   const fetchData = async () => {
@@ -263,6 +240,47 @@ export default function Page() {
     });
 
     setBookings(bookings);
+  };
+
+  const testOption = (option: string, values: Inputs) => {
+    const { date, device } = values;
+
+    const currentContextsBookings = bookings.filter(
+      (booking) =>
+        dayjs(booking.date).isSame(date, "day") && booking.device === device
+    );
+
+    const bookedOptions = currentContextsBookings.map((booking) => {
+      return `${dayjs(booking.initialTime).format("HH:mm")} - ${dayjs(
+        booking.endTime
+      ).format("HH:mm")}`;
+    });
+
+    return bookedOptions.includes(option);
+  };
+
+  const handleTimeChange = (
+    formik: FormikProps<Inputs>,
+    value: string | null
+  ) => {
+    if (!formik.values.date || !value) return;
+
+    formik.setFieldValue("timeString", value);
+
+    const initialHour = +value.split(" - ")[0].split(":")[0];
+    const initialMinute = +value.split(" - ")[0].split(":")[1];
+    const endHour = +value.split(" - ")[1].split(":")[0];
+    const endMinute = +value.split(" - ")[1].split(":")[1];
+
+    const initialTime = formik.values.date
+      .set("hour", initialHour)
+      .set("minute", initialMinute);
+    const endTime = formik.values.date
+      .set("hour", endHour)
+      .set("minute", endMinute);
+
+    formik.setFieldValue("initialTime", initialTime);
+    formik.setFieldValue("endTime", endTime);
   };
 
   useEffect(() => {
@@ -312,6 +330,7 @@ export default function Page() {
             partner: "",
             place: "",
             date: null,
+            timeString: "",
             initialTime: null,
             endTime: null,
           }}
@@ -329,11 +348,11 @@ export default function Page() {
                 className="flex flex-col items-center gap-4 w-full"
               >
                 <CustomAutocomplete
-                  options={devices}
+                  options={DEVICES}
                   label="Dispositivo"
                   formik={formik}
                   field="device"
-                  shouldCheckTime
+                  checkForVicentina
                 />
                 <div className="flex flex-col w-full gap-8 py-4">
                   <div className="flex gap-2 w-full">
@@ -359,16 +378,14 @@ export default function Page() {
                     </div>
                     <div className="flex gap-4 flex-col w-full">
                       <CustomAutocomplete
-                        options={places}
+                        options={PLACES}
                         label="Local"
                         formik={formik}
                         field="place"
-                        value={
-                          formik.values.device === "Carrinho Vicentina"
-                            ? "Vicentina Aranha"
-                            : formik.values.place
+                        value={formik.values.place}
+                        disabled={
+                          formik.values.device === "Carrinho 2 (Vicentina)"
                         }
-                        disabled={formik.values.device === "Carrinho Vicentina"}
                       />
                     </div>
                   </div>
@@ -386,101 +403,44 @@ export default function Page() {
                           label="Data"
                           disablePast
                           onChange={(value) => {
-                            checkAvailability(
-                              formik.values.device,
-                              value,
-                              formik.values.initialTime,
-                              formik.values.endTime
-                            );
-
+                            formik.setFieldValue("timeString", "");
                             formik.setFieldValue("date", value);
                           }}
                           value={formik.values.date}
                         />
                         <FormHelperText>{formik.errors.date}</FormHelperText>
                       </FormControl>
-                      <FormControl
-                        error={Boolean(formik.errors.initialTime)}
-                        sx={{ width: "100%" }}
-                      >
-                        <MobileTimePicker
-                          name="time"
-                          label="Início"
-                          sx={{ width: "100%" }}
-                          onChange={(value) => {
-                            formik.setFieldValue("endTime", null);
-                            setBlockingInitialBooking(undefined);
-                            formik.setFieldValue("initialTime", value);
-                          }}
-                          value={formik.values.initialTime}
+                      <FormControl>
+                        <Autocomplete
+                          fullWidth
+                          disablePortal
+                          disabled={
+                            !formik.values.date || !formik.values.device
+                          }
+                          options={OPENINGS}
+                          getOptionDisabled={(option) =>
+                            testOption(option, formik.values)
+                          }
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label={"Horário"}
+                              error={Boolean(formik.errors.timeString)}
+                              helperText={formik.errors.timeString}
+                            />
+                          )}
+                          value={formik.values.timeString}
+                          onChange={(_e, value) =>
+                            handleTimeChange(formik, value)
+                          }
                         />
-                        <FormHelperText>
-                          {formik.errors.initialTime}
-                        </FormHelperText>
-                      </FormControl>
-                      <FormControl
-                        error={Boolean(formik.errors.endTime)}
-                        sx={{ width: "100%" }}
-                      >
-                        <MobileTimePicker
-                          name="time"
-                          label="Fim"
-                          sx={{ width: "100%" }}
-                          onChange={(value) => {
-                            checkAvailability(
-                              formik.values.device,
-                              formik.values.date,
-                              formik.values.initialTime,
-                              value
-                            );
-                            formik.setFieldValue("endTime", value);
-                          }}
-                          value={formik.values.endTime}
-                          disabled={!formik.values.initialTime}
-                          {...(formik.values.initialTime
-                            ? {
-                                minTime: formik.values.initialTime.add(
-                                  1,
-                                  "hour"
-                                ),
-                                maxTime: formik.values.initialTime.add(
-                                  2,
-                                  "hour"
-                                ),
-                              }
-                            : {})}
-                        />
-
-                        <FormHelperText error={true}>
-                          {blockingInitialBookings}
-                        </FormHelperText>
-
-                        {formik.values.initialTime ? (
-                          <>
-                            <FormHelperText>
-                              {formik.errors.endTime}
-                            </FormHelperText>
-                            <FormHelperText error={false}>
-                              Duração Permitida de 1 até 2 horas
-                            </FormHelperText>
-                          </>
-                        ) : (
-                          <FormHelperText error={false}>
-                            Selecione a hora de início
+                        {!formik.values.device ? (
+                          <FormHelperText>
+                            Selecione um dispositivo
                           </FormHelperText>
-                        )}
-                        {formik.values.initialTime && formik.values.endTime && (
-                          <FormHelperText error={false}>
-                            {"Duração: "}
-                            {dayjs
-                              .duration(
-                                formik.values.endTime.diff(
-                                  formik.values.initialTime,
-                                  "minutes"
-                                ),
-                                "minute"
-                              )
-                              .format("HH:mm")}
+                        ) : (
+                          <FormHelperText>
+                            {!formik.values.date && "Selecione uma data"}
                           </FormHelperText>
                         )}
                       </FormControl>

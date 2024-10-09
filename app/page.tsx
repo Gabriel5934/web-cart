@@ -1,13 +1,22 @@
 "use client";
 
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Badge,
   Button,
   Chip,
+  Divider,
+  Drawer,
+  FormControl,
+  FormHelperText,
   Grow,
+  IconButton,
   Paper,
   Snackbar,
+  TextField,
   Typography,
 } from "@mui/material";
 import {
@@ -16,6 +25,8 @@ import {
   Timestamp,
   query,
   orderBy,
+  doc,
+  deleteDoc,
 } from "firebase/firestore";
 import Link from "next/link";
 import { db } from "./firebase";
@@ -32,6 +43,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 interface BookingDoc {
   id: string;
@@ -61,6 +73,8 @@ dayjs.extend(isBetween);
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
 
+const SAFE_DELETE_TEXT = "esplanada";
+
 export default function Page() {
   const searchParams = useSearchParams();
 
@@ -75,47 +89,45 @@ export default function Page() {
     {}
   );
   const [loading, setLoading] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerBooking, setDrawerBooking] = useState<Booking>();
+  const [safeDeleteText, setSafeDeleteText] = useState("");
 
   const closeSnackbar = () => setSnackbarOpen(false);
 
+  const fetchData = async () => {
+    const q = query(collection(db, "bookings"), orderBy("date"));
+    const querySnapshot = await getDocs(q);
+
+    const bookings: Array<Booking> = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as BookingDoc;
+      const formatted = {
+        ...data,
+        id: doc.id,
+        date: data.date.toDate(),
+        initialTime: data.initialTime.toDate(),
+        endTime: data.endTime.toDate(),
+      };
+
+      bookings.push(formatted);
+    });
+
+    const dateFilteredBookings = _.orderBy(
+      bookings.filter((booking) =>
+        dayjs(booking.date).isSameOrAfter(dayjs().startOf("day"))
+      ),
+      "initialTime"
+    );
+
+    setBookingsByDate(_.groupBy(dateFilteredBookings, "date"));
+    setDates(Object.keys(_.groupBy(dateFilteredBookings, "date")));
+
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      const q = query(collection(db, "bookings"), orderBy("date"));
-      const querySnapshot = await getDocs(q);
-
-      const bookings: Array<Booking> = [];
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data() as BookingDoc;
-        const formatted = {
-          ...data,
-          id: doc.id,
-          date: data.date.toDate(),
-          initialTime: data.initialTime.toDate(),
-          endTime: data.endTime.toDate(),
-        };
-
-        bookings.push(formatted);
-      });
-
-      const dateFilteredBookings = _.orderBy(
-        bookings
-          .filter((booking) =>
-            dayjs(booking.date).isSameOrAfter(dayjs().startOf("day"))
-          )
-          .map((booking) => ({
-            ...booking,
-            initialTime: setDateToToday(dayjs(booking.initialTime)).toDate(),
-          })),
-        "initialTime"
-      );
-
-      setBookingsByDate(_.groupBy(dateFilteredBookings, "date"));
-      setDates(Object.keys(_.groupBy(dateFilteredBookings, "date")));
-
-      setLoading(false);
-    };
-
     fetchData();
   }, []);
 
@@ -167,10 +179,15 @@ export default function Page() {
       }
     };
 
+    const onClick = () => {
+      setDrawerOpen(true);
+      setDrawerBooking(booking);
+    };
+
     if (isAnchor) {
       return (
         <Grow in={true} timeout={3000}>
-          <Badge badgeContent="Novo" color="success">
+          <IconButton onClick={onClick}>
             <Paper
               sx={{
                 bgcolor: "primary.main",
@@ -180,7 +197,7 @@ export default function Page() {
               id={booking.id}
               ref={anchorRef}
             >
-              <Typography variant="body2">
+              <Typography variant="body2" className="text-left">
                 {booking.device} - {booking.place}
               </Typography>
               <div className="flex gap-4">
@@ -194,47 +211,56 @@ export default function Page() {
                 </Typography>
               </div>
             </Paper>
-          </Badge>
+          </IconButton>
         </Grow>
       );
     } else {
       return (
-        <Paper
-          sx={{
-            bgcolor: "primary.main",
-            filter: `brightness(${isPast ? 0.5 : 1})`,
-            color: "white",
-          }}
-          className="flex flex-col p-4 rounded-md text-white w-full"
-          id={booking.id}
-        >
-          <div
-            className="flex justify-between items-center"
-            style={{
-              marginBottom: showChip ? 8 : 0,
-              textTransform: "capitalize",
+        <IconButton onClick={onClick}>
+          <Paper
+            sx={{
+              bgcolor: "primary.main",
+              filter: `brightness(${isPast ? 0.5 : 1})`,
+              color: "white",
             }}
+            className="flex flex-col p-4 rounded-md text-white w-full"
+            id={booking.id}
           >
-            <Typography variant="body2">
-              {booking.device} - {booking.place}
-            </Typography>
-            {showChip && (
-              <Chip label={getChipLabel()} color="warning" size="small" />
-            )}
-          </div>
-          <div className="flex gap-4">
-            <Typography variant="body1">
-              {booking.initialTime.toLocaleTimeString("pt-br").slice(0, 5)}
-              {" - "}
-              {booking.endTime.toLocaleTimeString("pt-br").slice(0, 5)}
-            </Typography>
-            <Typography variant="body1">
-              {booking.name} e {booking.partner}
-            </Typography>
-          </div>
-        </Paper>
+            <div
+              className="flex justify-between items-center"
+              style={{
+                marginBottom: showChip ? 8 : 0,
+                textTransform: "capitalize",
+              }}
+            >
+              <Typography variant="body2">
+                {booking.device} - {booking.place}
+              </Typography>
+              {showChip && (
+                <Chip label={getChipLabel()} color="warning" size="small" />
+              )}
+            </div>
+            <div className="flex gap-4">
+              <Typography variant="body1">
+                {booking.initialTime.toLocaleTimeString("pt-br").slice(0, 5)}
+                {" - "}
+                {booking.endTime.toLocaleTimeString("pt-br").slice(0, 5)}
+              </Typography>
+              <Typography variant="body1">
+                {booking.name} e {booking.partner}
+              </Typography>
+            </div>
+          </Paper>
+        </IconButton>
       );
     }
+  };
+
+  const deleteBooking = async (id: string) => {
+    await deleteDoc(doc(db, "bookings", id));
+
+    setDrawerOpen(false);
+    fetchData();
   };
 
   return (
@@ -254,6 +280,68 @@ export default function Page() {
           Reserva feita!
         </Alert>
       </Snackbar>
+      <Drawer
+        open={drawerOpen}
+        anchor="bottom"
+        onClose={() => {
+          setSafeDeleteText("");
+          setDrawerOpen(false);
+        }}
+      >
+        <div className="gap-10 flex flex-col">
+          <div className="px-8 py-12 ">
+            <div className="flex justify-between items-center capitalize">
+              <Typography variant="h6">
+                {drawerBooking?.device} - {drawerBooking?.place}
+              </Typography>
+            </div>
+            <div className="flex gap-4">
+              <Typography variant="h5">
+                {drawerBooking?.initialTime
+                  .toLocaleTimeString("pt-br")
+                  .slice(0, 5)}
+                {" - "}
+                {drawerBooking?.endTime.toLocaleTimeString("pt-br").slice(0, 5)}
+              </Typography>
+              <Typography variant="h5">
+                {drawerBooking?.name} e {drawerBooking?.partner}
+              </Typography>
+            </div>
+          </div>
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography className="mt-2" variant="h6">
+                Zona de Perigo
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <div className="flex flex-col gap-2">
+                <div>
+                  <Typography className="mb-2">
+                    Digite "esplanada" para deletar essa reserva
+                  </Typography>
+                  <TextField
+                    label="Digite aqui"
+                    size="small"
+                    value={safeDeleteText}
+                    onChange={(e) => setSafeDeleteText(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Button
+                    color="error"
+                    variant="contained"
+                    disabled={safeDeleteText !== SAFE_DELETE_TEXT}
+                    onClick={() => deleteBooking(drawerBooking?.id ?? "")}
+                  >
+                    deletar
+                  </Button>
+                </div>
+              </div>
+            </AccordionDetails>
+          </Accordion>
+        </div>
+      </Drawer>
       <div className="inline-block overflow-hidden relative w-full">
         <Image
           className="pointer-events-none absolute w-full -z-10"
