@@ -96,11 +96,14 @@ const PLACES = [
 
 const DEVICES = ["Carrinho 1", "Carrinho 2 (Vicentina)", "Display"];
 
+const BOOKED = "Reservado";
+
 export default function Page() {
   const router = useRouter();
   const [showBackdrop, setShowBackdrop] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [bookings, setBookings] = useState<Array<Booking>>([]);
+  const [timeStringOptions, setTimeStringOptions] = useState<Array<string>>([]);
 
   const closeSnackbar = () => setSnackbarOpen(false);
 
@@ -242,12 +245,14 @@ export default function Page() {
     setBookings(bookings);
   };
 
-  const testOption = (option: string, values: Inputs) => {
-    const { date, device } = values;
+  const blockTimeStringOptions = (newDate: Dayjs | null, values: Inputs) => {
+    if (!newDate) return;
+
+    const { device } = values;
 
     const currentContextsBookings = bookings.filter(
       (booking) =>
-        dayjs(booking.date).isSame(date, "day") && booking.device === device
+        dayjs(booking.date).isSame(newDate, "day") && booking.device === device
     );
 
     const bookedOptions = currentContextsBookings.map((booking) => {
@@ -256,7 +261,11 @@ export default function Page() {
       ).format("HH:mm")}`;
     });
 
-    return bookedOptions.includes(option);
+    const newOptions = OPENINGS.map((opening) =>
+      bookedOptions.includes(opening) ? `${opening} (${BOOKED})` : opening
+    );
+
+    setTimeStringOptions(newOptions);
   };
 
   const handleTimeChange = (
@@ -403,6 +412,7 @@ export default function Page() {
                           label="Data"
                           disablePast
                           onChange={(value) => {
+                            blockTimeStringOptions(value, formik.values);
                             formik.setFieldValue("timeString", "");
                             formik.setFieldValue("date", value);
                           }}
@@ -417,9 +427,9 @@ export default function Page() {
                           disabled={
                             !formik.values.date || !formik.values.device
                           }
-                          options={OPENINGS}
+                          options={timeStringOptions}
                           getOptionDisabled={(option) =>
-                            testOption(option, formik.values)
+                            option.includes(BOOKED)
                           }
                           renderInput={(params) => (
                             <TextField
