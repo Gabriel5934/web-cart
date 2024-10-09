@@ -111,8 +111,12 @@ export default function Page() {
       "initialTime"
     );
 
-    setBookingsByDate(_.groupBy(dateFilteredBookings, "date"));
-    setDates(Object.keys(_.groupBy(dateFilteredBookings, "date")));
+    const grouped = _.groupBy(dateFilteredBookings, (booking) =>
+      dayjs(booking.date).startOf("day")
+    );
+
+    setBookingsByDate(grouped);
+    setDates(Object.keys(grouped));
 
     setLoading(false);
   };
@@ -145,7 +149,9 @@ export default function Page() {
   const Booking = (booking: Booking) => {
     const isAnchor = anchorId === booking.id;
 
-    const isPast = setDateToToday(dayjs(booking.date)).isBefore(dayjs());
+    const isPast = setDateToToday(dayjs(booking.date).add(2, "hour")).isBefore(
+      dayjs()
+    );
 
     const isCurrent = dayjs().isBetween(
       booking.date,
