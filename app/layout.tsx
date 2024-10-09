@@ -24,7 +24,7 @@ export default function RootLayout({
   const pathIndex = routes.indexOf(pathname);
   const [tab, setTab] = useState(pathIndex);
 
-  const changeTab = (_event: any, tab: number) => {
+  const changeTab = (_event: unknown, tab: number) => {
     setTab(tab);
     router.push(routes[tab]);
   };

@@ -23,7 +23,7 @@ import _ from "lodash";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { createRef, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import publicMinistry from "./assets/publicMinistry.jpg";
@@ -67,7 +67,7 @@ export default function Page() {
   const showSnackbar = Boolean(searchParams.get("success"));
   const anchorId = searchParams.get("id") ?? "";
 
-  const anchorRef = useRef(null);
+  const anchorRef = createRef<HTMLDivElement>();
 
   const [snackbarOpen, setSnackbarOpen] = useState(showSnackbar);
   const [dates, setDates] = useState<Array<keyof _.Dictionary<Booking[]>>>([]);
@@ -78,56 +78,56 @@ export default function Page() {
 
   const closeSnackbar = () => setSnackbarOpen(false);
 
-  const fetchData = async () => {
-    const q = query(collection(db, "bookings"), orderBy("date"));
-    const querySnapshot = await getDocs(q);
-
-    const bookings: Array<Booking> = [];
-
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as BookingDoc;
-      const formatted = {
-        ...data,
-        id: doc.id,
-        date: data.date.toDate(),
-        initialTime: data.initialTime.toDate(),
-        endTime: data.endTime.toDate(),
-      };
-
-      bookings.push(formatted);
-    });
-
-    const dateFilteredBookings = _.orderBy(
-      bookings
-        .filter((booking) =>
-          dayjs(booking.date).isSameOrAfter(dayjs().startOf("day"))
-        )
-        .map((booking) => ({
-          ...booking,
-          initialTime: setDateToToday(dayjs(booking.initialTime)).toDate(),
-        })),
-      "initialTime"
-    );
-
-    setBookingsByDate(_.groupBy(dateFilteredBookings, "date"));
-    setDates(Object.keys(_.groupBy(dateFilteredBookings, "date")));
-
-    setLoading(false);
-  };
-
   useEffect(() => {
+    const fetchData = async () => {
+      const q = query(collection(db, "bookings"), orderBy("date"));
+      const querySnapshot = await getDocs(q);
+
+      const bookings: Array<Booking> = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data() as BookingDoc;
+        const formatted = {
+          ...data,
+          id: doc.id,
+          date: data.date.toDate(),
+          initialTime: data.initialTime.toDate(),
+          endTime: data.endTime.toDate(),
+        };
+
+        bookings.push(formatted);
+      });
+
+      const dateFilteredBookings = _.orderBy(
+        bookings
+          .filter((booking) =>
+            dayjs(booking.date).isSameOrAfter(dayjs().startOf("day"))
+          )
+          .map((booking) => ({
+            ...booking,
+            initialTime: setDateToToday(dayjs(booking.initialTime)).toDate(),
+          })),
+        "initialTime"
+      );
+
+      setBookingsByDate(_.groupBy(dateFilteredBookings, "date"));
+      setDates(Object.keys(_.groupBy(dateFilteredBookings, "date")));
+
+      setLoading(false);
+    };
+
     fetchData();
   }, []);
 
   useEffect(() => {
     if (anchorRef.current) {
-      const current = anchorRef.current as any;
+      const current = anchorRef.current;
       current.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
     }
-  }, [dates]);
+  }, [dates, anchorRef]);
 
   function setDateToToday(date: Dayjs) {
     const today = dayjs();

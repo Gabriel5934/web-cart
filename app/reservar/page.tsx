@@ -178,7 +178,7 @@ export default function Page() {
     const { formik, field, label, options, disabled, value, shouldCheckTime } =
       props;
 
-    const handleChange = (_e: any, value: string | null) => {
+    const handleChange = (_e: unknown, value: string | null) => {
       formik.setFieldValue(field, value);
 
       if (shouldCheckTime) {
