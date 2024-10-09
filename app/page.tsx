@@ -69,7 +69,7 @@ dayjs.extend(isBetween);
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
 
-const SAFE_DELETE_TEXT = "esplanada";
+const SAFE_DELETE_TEXT = "Esplanada";
 
 export default function Page() {
   const searchParams = useSearchParams();
@@ -312,10 +312,10 @@ export default function Page() {
             </AccordionSummary>
             <AccordionDetails>
               <div className="flex flex-col gap-2">
+                <Typography className="mb-2">
+                  {'Digite "Esplanada" para deletar essa reserva'}
+                </Typography>
                 <div>
-                  <Typography className="mb-2">
-                    {'Digite "esplanada" para deletar essa reserva'}
-                  </Typography>
                   <TextField
                     label="Digite aqui"
                     size="small"
