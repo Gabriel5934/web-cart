@@ -48,8 +48,6 @@ interface BookingDoc {
   partner: string;
   place: string;
   date: Timestamp;
-  initialTime: Timestamp;
-  endTime: Timestamp;
 }
 
 interface Booking {
@@ -59,8 +57,6 @@ interface Booking {
   partner: string;
   place: string;
   date: Date;
-  initialTime: Date;
-  endTime: Date;
 }
 
 dayjs.locale("pt-br");
@@ -103,8 +99,6 @@ export default function Page() {
         ...data,
         id: doc.id,
         date: data.date.toDate(),
-        initialTime: data.initialTime.toDate(),
-        endTime: data.endTime.toDate(),
       };
 
       bookings.push(formatted);
@@ -151,17 +145,17 @@ export default function Page() {
   const Booking = (booking: Booking) => {
     const isAnchor = anchorId === booking.id;
 
-    const isPast =
-      setDateToToday(dayjs(booking.endTime)).isBefore(dayjs()) &&
-      dayjs(booking.date).isSame(dayjs(), "day");
+    const isPast = setDateToToday(dayjs(booking.date)).isBefore(dayjs());
 
-    const isCurrent = dayjs().isBetween(booking.initialTime, booking.endTime);
+    const isCurrent = dayjs().isBetween(
+      booking.date,
+      dayjs(booking.date).add(2, "hour")
+    );
 
-    const isNext =
-      dayjs().isBetween(
-        dayjs(booking.initialTime),
-        dayjs(booking.initialTime).subtract(2, "hours")
-      ) && dayjs(booking.date).isSame(dayjs(), "day");
+    const isNext = dayjs().isBetween(
+      dayjs(booking.date),
+      dayjs(booking.date).subtract(2, "hours")
+    );
 
     const showChip = isCurrent || isNext;
 
@@ -170,7 +164,7 @@ export default function Page() {
         return "Agora";
       } else if (isNext) {
         return dayjs
-          .duration(setDateToToday(dayjs(booking.initialTime)).diff(dayjs()))
+          .duration(setDateToToday(dayjs(booking.date)).diff(dayjs()))
           .humanize(true);
       }
     };
@@ -198,9 +192,13 @@ export default function Page() {
               </Typography>
               <div className="flex gap-4">
                 <Typography variant="body1">
-                  {booking.initialTime.toLocaleTimeString("pt-br").slice(0, 5)}
+                  {booking.date.toLocaleTimeString("pt-br").slice(0, 5)}
                   {" - "}
-                  {booking.endTime.toLocaleTimeString("pt-br").slice(0, 5)}
+                  {dayjs(booking.date)
+                    .add(2, "hour")
+                    .toDate()
+                    .toLocaleTimeString("pt-br")
+                    .slice(0, 5)}
                 </Typography>
                 <Typography variant="body1">
                   {booking.name} e {booking.partner}
@@ -238,9 +236,13 @@ export default function Page() {
             </div>
             <div className="flex gap-4">
               <Typography variant="body1">
-                {booking.initialTime.toLocaleTimeString("pt-br").slice(0, 5)}
+                {booking.date.toLocaleTimeString("pt-br").slice(0, 5)}
                 {" - "}
-                {booking.endTime.toLocaleTimeString("pt-br").slice(0, 5)}
+                {dayjs(booking.date)
+                  .add(2, "hour")
+                  .toDate()
+                  .toLocaleTimeString("pt-br")
+                  .slice(0, 5)}
               </Typography>
               <Typography variant="body1">
                 {booking.name} e {booking.partner}
@@ -293,11 +295,13 @@ export default function Page() {
             </div>
             <div className="flex gap-4">
               <Typography variant="h5">
-                {drawerBooking?.initialTime
+                {drawerBooking?.date.toLocaleTimeString("pt-br").slice(0, 5)}
+                {" - "}
+                {dayjs(drawerBooking?.date)
+                  .add(2, "hour")
+                  .toDate()
                   .toLocaleTimeString("pt-br")
                   .slice(0, 5)}
-                {" - "}
-                {drawerBooking?.endTime.toLocaleTimeString("pt-br").slice(0, 5)}
               </Typography>
               <Typography variant="h5">
                 {drawerBooking?.name} e {drawerBooking?.partner}
@@ -392,7 +396,7 @@ export default function Page() {
                   {dayjs(new Date(date)).format("dddd")}
                 </Typography>
                 {bookingsByDate[date].map((booking) => (
-                  <Booking {...booking} key={`${date}${booking.initialTime}`} />
+                  <Booking {...booking} key={booking.date.toDateString()} />
                 ))}
               </div>
             ))

@@ -45,8 +45,6 @@ interface Inputs {
   place: string;
   date: Dayjs | null;
   timeString: string;
-  initialTime: Dayjs | null;
-  endTime: Dayjs | null;
 }
 
 interface BookingDoc {
@@ -56,8 +54,6 @@ interface BookingDoc {
   partner: string;
   place: string;
   date: Timestamp;
-  initialTime: Timestamp;
-  endTime: Timestamp;
 }
 
 interface Booking {
@@ -67,8 +63,6 @@ interface Booking {
   partner: string;
   place: string;
   date: Date;
-  initialTime: Date;
-  endTime: Date;
 }
 
 dayjs.locale("pt-br");
@@ -108,13 +102,11 @@ export default function Page() {
   const closeSnackbar = () => setSnackbarOpen(false);
 
   const onSubmit = async (values: Inputs) => {
-    if (!values.date || !values.initialTime || !values.endTime) return;
+    if (!values.date) return;
 
     const formatted = {
       ...values,
       date: Timestamp.fromDate(values.date.toDate()),
-      initialTime: Timestamp.fromDate(values.initialTime.toDate()),
-      endTime: Timestamp.fromDate(values.endTime.toDate()),
     };
 
     try {
@@ -235,8 +227,6 @@ export default function Page() {
         ...data,
         id: doc.id,
         date: data.date.toDate(),
-        initialTime: data.initialTime.toDate(),
-        endTime: data.endTime.toDate(),
       };
 
       bookings.push(formatted);
@@ -256,9 +246,9 @@ export default function Page() {
     );
 
     const bookedOptions = currentContextsBookings.map((booking) => {
-      return `${dayjs(booking.initialTime).format("HH:mm")} - ${dayjs(
-        booking.endTime
-      ).format("HH:mm")}`;
+      return `${dayjs(booking.date).format("HH:mm")} - ${dayjs(booking.date)
+        .add(2, "hour")
+        .format("HH:mm")}`;
     });
 
     const newOptions = OPENINGS.map((opening) =>
@@ -278,18 +268,12 @@ export default function Page() {
 
     const initialHour = +value.split(" - ")[0].split(":")[0];
     const initialMinute = +value.split(" - ")[0].split(":")[1];
-    const endHour = +value.split(" - ")[1].split(":")[0];
-    const endMinute = +value.split(" - ")[1].split(":")[1];
 
-    const initialTime = formik.values.date
+    const newDate = formik.values.date
       .set("hour", initialHour)
       .set("minute", initialMinute);
-    const endTime = formik.values.date
-      .set("hour", endHour)
-      .set("minute", endMinute);
 
-    formik.setFieldValue("initialTime", initialTime);
-    formik.setFieldValue("endTime", endTime);
+    formik.setFieldValue("date", newDate);
   };
 
   useEffect(() => {
@@ -340,8 +324,6 @@ export default function Page() {
             place: "",
             date: null,
             timeString: "",
-            initialTime: null,
-            endTime: null,
           }}
           onSubmit={onSubmit}
           validationSchema={schema}
