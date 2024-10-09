@@ -9,7 +9,7 @@ import "@fontsource/roboto/700.css";
 import { Paper, BottomNavigation, BottomNavigationAction } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 
@@ -36,7 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="mb-16">{children}</div>
+        <div className="mb-16">
+          <Suspense>{children}</Suspense>
+        </div>
         <Paper
           sx={{ position: "fixed", bottom: 0, left: 0, right: 0 }}
           elevation={3}
