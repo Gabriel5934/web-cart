@@ -314,7 +314,7 @@ export default function Page() {
               <div className="flex flex-col gap-2">
                 <div>
                   <Typography className="mb-2">
-                    Digite "esplanada" para deletar essa reserva
+                    {'Digite "esplanada" para deletar essa reserva'}
                   </Typography>
                   <TextField
                     label="Digite aqui"
