@@ -27,7 +27,7 @@ import {
 import Link from "next/link";
 import { db } from "./firebase";
 import _ from "lodash";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import "dayjs/locale/pt-br";
 import { useSearchParams } from "next/navigation";
 import { createRef, useEffect, useState } from "react";
