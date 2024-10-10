@@ -135,23 +135,10 @@ export default function Page() {
     }
   }, [dates, anchorRef]);
 
-  function setDateToToday(date: Dayjs) {
-    const today = dayjs();
-
-    const newDate = date
-      .set("D", today.get("D"))
-      .set("m", today.get("m"))
-      .set("y", today.get("y"));
-
-    return newDate;
-  }
-
   const Booking = (booking: Booking) => {
     const isAnchor = anchorId === booking.id;
 
-    const isPast = setDateToToday(dayjs(booking.date).add(2, "hour")).isBefore(
-      dayjs()
-    );
+    const isPast = dayjs(booking.date).add(2, "hour").isBefore(dayjs());
 
     const isCurrent = dayjs().isBetween(
       booking.date,
@@ -169,9 +156,7 @@ export default function Page() {
       if (isCurrent) {
         return "Agora";
       } else if (isNext) {
-        return dayjs
-          .duration(setDateToToday(dayjs(booking.date)).diff(dayjs()))
-          .humanize(true);
+        return dayjs.duration(dayjs(booking.date).diff(dayjs())).humanize(true);
       }
     };
 
@@ -402,7 +387,7 @@ export default function Page() {
                   {dayjs(new Date(date)).format("dddd")}
                 </Typography>
                 {bookingsByDate[date].map((booking) => (
-                  <Booking {...booking} key={booking.date.toDateString()} />
+                  <Booking {...booking} key={booking.date.toISOString()} />
                 ))}
               </div>
             ))
