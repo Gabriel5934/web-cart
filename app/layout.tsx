@@ -35,6 +35,9 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <title>Jardim Esplanada</title>
+      </head>
       <body>
         <div className="mb-16">
           <Suspense>{children}</Suspense>
