@@ -12,13 +12,14 @@ import HomeIcon from "@mui/icons-material/Home";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const routes = ["/", "/reservar"];
+  const routes = ["/", "/localizar", "/reservar"];
   const router = useRouter();
   const pathname = usePathname();
   const pathIndex = routes.indexOf(pathname);
@@ -49,6 +50,10 @@ export default function RootLayout({
         >
           <BottomNavigation showLabels value={tab} onChange={changeTab}>
             <BottomNavigationAction label="Início" icon={<HomeIcon />} />
+            <BottomNavigationAction
+              label="Localizar"
+              icon={<LocationOnIcon />}
+            />
             <BottomNavigationAction label="Reservar" icon={<AddIcon />} />
           </BottomNavigation>
         </Paper>

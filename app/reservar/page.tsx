@@ -54,6 +54,7 @@ interface BookingDoc {
   partner: string;
   place: string;
   date: Timestamp;
+  returned: boolean;
 }
 
 interface Booking {
@@ -63,6 +64,7 @@ interface Booking {
   partner: string;
   place: string;
   date: Date;
+  returned: boolean;
 }
 
 dayjs.locale("pt-br");
@@ -106,9 +108,10 @@ export default function Page() {
   const onSubmit = async (values: Inputs) => {
     if (!values.date) return;
 
-    const formatted = {
+    const formatted: Omit<BookingDoc, "id"> = {
       ...values,
       date: Timestamp.fromDate(values.date.toDate()),
+      returned: false,
     };
 
     try {

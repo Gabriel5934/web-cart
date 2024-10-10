@@ -25,6 +25,7 @@ import {
   orderBy,
   doc,
   deleteDoc,
+  updateDoc,
 } from "firebase/firestore";
 import Link from "next/link";
 import { db } from "./firebase";
@@ -50,6 +51,7 @@ interface BookingDoc {
   partner: string;
   place: string;
   date: Timestamp;
+  returned: boolean;
 }
 
 interface Booking {
@@ -59,6 +61,7 @@ interface Booking {
   partner: string;
   place: string;
   date: Date;
+  returned: boolean;
 }
 
 dayjs.locale("pt-br");
@@ -97,10 +100,11 @@ export default function Page() {
 
     querySnapshot.forEach((doc) => {
       const data = doc.data() as BookingDoc;
-      const formatted = {
+      const formatted: Booking = {
         ...data,
         id: doc.id,
         date: data.date.toDate(),
+        returned: data.returned ?? false,
       };
 
       bookings.push(formatted);
@@ -254,6 +258,17 @@ export default function Page() {
     fetchData();
   };
 
+  const returnBooking = async (id: string, returned: boolean) => {
+    const bookingRef = doc(db, "bookings", id);
+
+    await updateDoc(bookingRef, {
+      returned,
+    });
+
+    setDrawerOpen(false);
+    fetchData();
+  };
+
   return (
     <>
       <Snackbar
@@ -279,61 +294,114 @@ export default function Page() {
           setDrawerOpen(false);
         }}
       >
-        <div className="gap-10 flex flex-col">
-          <div className="px-8 py-12 ">
-            <div className="flex justify-between items-center capitalize">
-              <Typography variant="h6">
-                {drawerBooking?.device} - {drawerBooking?.place}
-              </Typography>
-            </div>
-            <div className="flex gap-4">
-              <Typography variant="h5">
-                {drawerBooking?.date.toLocaleTimeString("pt-br").slice(0, 5)}
-                {" - "}
-                {dayjs(drawerBooking?.date)
-                  .add(2, "hour")
-                  .toDate()
-                  .toLocaleTimeString("pt-br")
-                  .slice(0, 5)}
-              </Typography>
-              <Typography variant="h5">
-                {drawerBooking?.name} e {drawerBooking?.partner}
-              </Typography>
-            </div>
+        <Box
+          sx={(theme) => ({
+            bgcolor: theme.palette.primary.main,
+            color: "white",
+          })}
+          className="px-4 pt-16 pb-8"
+        >
+          <div className="flex justify-between items-center capitalize">
+            <Typography variant="h6">
+              {drawerBooking?.device} - {drawerBooking?.place}
+            </Typography>
           </div>
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography className="mt-2" variant="h6">
-                Zona de Perigo
+          <div className="flex gap-4">
+            <Typography variant="h5">
+              {drawerBooking?.date.toLocaleTimeString("pt-br").slice(0, 5)}
+              {" - "}
+              {dayjs(drawerBooking?.date)
+                .add(2, "hour")
+                .toDate()
+                .toLocaleTimeString("pt-br")
+                .slice(0, 5)}
+            </Typography>
+            <Typography variant="h5">
+              {drawerBooking?.name} e {drawerBooking?.partner}
+            </Typography>
+          </div>
+        </Box>
+        <Accordion
+          disabled={drawerBooking && dayjs(drawerBooking.date).isAfter(dayjs())}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="h6">Devolver</Typography>
+              <Typography>
+                {drawerBooking &&
+                  dayjs(drawerBooking.date).isAfter(dayjs()) &&
+                  "(Liberado após o fim da reserva)"}
               </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <div className="flex flex-col gap-2">
-                <Typography className="mb-2">
-                  {'Digite "Esplanada" para deletar essa reserva'}
-                </Typography>
-                <div>
-                  <TextField
-                    label="Digite aqui"
-                    size="small"
-                    value={safeDeleteText}
-                    onChange={(e) => setSafeDeleteText(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Button
-                    color="error"
-                    variant="contained"
-                    disabled={safeDeleteText !== SAFE_DELETE_TEXT}
-                    onClick={() => deleteBooking(drawerBooking?.id ?? "")}
-                  >
-                    deletar
-                  </Button>
-                </div>
+              {drawerBooking && drawerBooking.returned && (
+                <Chip color="success" label="Devolvido" />
+              )}
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails>
+            {drawerBooking &&
+              (drawerBooking.returned ? (
+                <Stack spacing={1}>
+                  <Typography>
+                    Clique nesse botão apenas se você{" "}
+                    <strong> não devolveu</strong> o carrinho no salão
+                  </Typography>
+                  <Box sx={{ textAlign: "right" }}>
+                    <Button
+                      variant="contained"
+                      onClick={() => returnBooking(drawerBooking.id, false)}
+                    >
+                      não devolvi
+                    </Button>
+                  </Box>
+                </Stack>
+              ) : (
+                <Stack spacing={1}>
+                  <Typography>
+                    Clique nesse botão apenas se você <strong>devolveu</strong>{" "}
+                    o carrinho no salão
+                  </Typography>
+                  <Box sx={{ textAlign: "right" }}>
+                    <Button
+                      variant="contained"
+                      onClick={() => returnBooking(drawerBooking.id, true)}
+                    >
+                      devolvi
+                    </Button>
+                  </Box>
+                </Stack>
+              ))}
+          </AccordionDetails>
+        </Accordion>
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6">Zona de Perigo</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <div className="flex flex-col gap-2">
+              <Typography className="mb-2">
+                {'Digite "Esplanada" para deletar essa reserva'}
+              </Typography>
+              <div>
+                <TextField
+                  label="Digite aqui"
+                  size="small"
+                  value={safeDeleteText}
+                  onChange={(e) => setSafeDeleteText(e.target.value)}
+                />
               </div>
-            </AccordionDetails>
-          </Accordion>
-        </div>
+              <div>
+                <Button
+                  color="error"
+                  variant="contained"
+                  disabled={safeDeleteText !== SAFE_DELETE_TEXT}
+                  onClick={() => deleteBooking(drawerBooking?.id ?? "")}
+                >
+                  deletar
+                </Button>
+              </div>
+            </div>
+          </AccordionDetails>
+        </Accordion>
       </Drawer>
       <div className="inline-block overflow-hidden relative w-full">
         <Image
