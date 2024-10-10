@@ -5,6 +5,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Alert,
+  Box,
   Button,
   Chip,
   Drawer,
@@ -12,6 +13,7 @@ import {
   IconButton,
   Paper,
   Snackbar,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
@@ -201,7 +203,7 @@ export default function Page() {
       );
     } else {
       return (
-        <IconButton onClick={onClick}>
+        <IconButton onClick={onClick} sx={{ width: "100%" }}>
           <Paper
             sx={{
               bgcolor: "primary.main",
@@ -367,18 +369,17 @@ export default function Page() {
           </Link>
         </div>
       </div>
-      <div className="flex flex-col px-8 gap-4 items-center">
-        <div className="flex justify-between w-full items-center flex-col mb-8 gap-2">
-          <Typography variant="h4" className="w-full text-left">
-            Próximas Reservas
-          </Typography>
+
+      <Box sx={{ paddingX: 4 }}>
+        <Typography variant="h4" sx={{ marginBottom: 2 }}>
+          Próximas Reservas
+        </Typography>
+        <Stack spacing={2}>
           {loading ? (
-            <div className="w-full">
-              <Skeleton height={100} width={"100%"} count={5} />
-            </div>
+            <Skeleton height={100} width={"100%"} count={5} />
           ) : (
             dates.map((date) => (
-              <div className="flex w-full text-left flex-col gap-1" key={date}>
+              <Box key={date}>
                 <Typography variant="h6">
                   {dayjs(new Date(date)).format("D")}
                   {" de "}
@@ -389,11 +390,11 @@ export default function Page() {
                 {bookingsByDate[date].map((booking) => (
                   <Booking {...booking} key={booking.date.toISOString()} />
                 ))}
-              </div>
+              </Box>
             ))
           )}
-        </div>
-      </div>
+        </Stack>
+      </Box>
     </>
   );
 }
