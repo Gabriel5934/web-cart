@@ -13,22 +13,15 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { Formik, FormikProps } from "formik";
 import { object, string } from "yup";
 import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
 import dayjs, { Dayjs } from "dayjs";
-import {
-  addDoc,
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "../firebase";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { db } from "../firebase/firebase";
 import { useRouter } from "next/navigation";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
@@ -37,6 +30,9 @@ import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br";
+import { useGetBookings } from "../firebase/bookings/controller";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 interface Inputs {
   device: string;
@@ -54,16 +50,6 @@ interface BookingDoc {
   partner: string;
   place: string;
   date: Timestamp;
-  returned: boolean;
-}
-
-interface Booking {
-  id: string;
-  device: string;
-  name: string;
-  partner: string;
-  place: string;
-  date: Dayjs;
   returned: boolean;
 }
 
@@ -97,10 +83,11 @@ const DEVICES = ["Carrinho 1", "Carrinho 2", "Display"];
 const BOOKED = "Reservado";
 
 export default function Page() {
+  const { bookings, loading } = useGetBookings(false, true);
+
   const router = useRouter();
   const [showBackdrop, setShowBackdrop] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [bookings, setBookings] = useState<Array<Booking>>([]);
   const [timeStringOptions, setTimeStringOptions] = useState<Array<string>>([]);
 
   const closeSnackbar = () => setSnackbarOpen(false);
@@ -224,26 +211,6 @@ export default function Page() {
     );
   };
 
-  const fetchData = async () => {
-    const q = query(collection(db, "bookings"), orderBy("date"));
-    const querySnapshot = await getDocs(q);
-
-    const bookings: Array<Booking> = [];
-
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as BookingDoc;
-      const formatted = {
-        ...data,
-        id: doc.id,
-        date: dayjs(data.date.toDate()),
-      };
-
-      bookings.push(formatted);
-    });
-
-    setBookings(bookings);
-  };
-
   const blockTimeStringOptions = (newDate: Dayjs | null, device: string) => {
     if (!newDate) return;
 
@@ -283,10 +250,6 @@ export default function Page() {
     formik.setFieldValue("date", newDate);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   return (
     <>
       <Backdrop
@@ -321,138 +284,144 @@ export default function Page() {
           Fazer Reserva
         </Typography>
       </Box>
-
       <div className="flex flex-col p-8 gap-4 items-center">
-        <Formik<Inputs>
-          initialValues={{
-            device: "",
-            name: "",
-            partner: "",
-            place: "",
-            date: null,
-            timeString: "",
-          }}
-          onSubmit={onSubmit}
-          validationSchema={schema}
-          validateOnChange={false}
-        >
-          {(formik) => (
-            <LocalizationProvider
-              dateAdapter={AdapterDayjs}
-              adapterLocale="pt-br"
-            >
-              <form
-                onSubmit={formik.handleSubmit}
-                className="flex flex-col items-center gap-4 w-full"
+        {loading ? (
+          <Skeleton height={500} width={400} count={1} />
+        ) : (
+          <Formik<Inputs>
+            initialValues={{
+              device: "",
+              name: "",
+              partner: "",
+              place: "",
+              date: null,
+              timeString: "",
+            }}
+            onSubmit={onSubmit}
+            validationSchema={schema}
+            validateOnChange={false}
+          >
+            {(formik) => (
+              <LocalizationProvider
+                dateAdapter={AdapterDayjs}
+                adapterLocale="pt-br"
               >
-                <CustomAutocomplete
-                  options={DEVICES}
-                  label="Dispositivo"
-                  formik={formik}
-                  field="device"
-                  checkForVicentina
-                />
-                <div className="flex flex-col w-full gap-8 py-4">
-                  <div className="flex gap-2 w-full">
-                    <div className="py-2">
-                      <PersonIcon />
-                    </div>
-                    <div className="flex gap-4 flex-col w-full">
-                      <CustomTextField
-                        label="Seu Nome"
-                        field="name"
-                        formik={formik}
-                      />
-                      <CustomTextField
-                        label="Nome do companheiro(a)"
-                        field="partner"
-                        formik={formik}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 w-full">
-                    <div className="py-2">
-                      <LocationOn />
-                    </div>
-                    <div className="flex gap-4 flex-col w-full">
-                      <CustomAutocomplete
-                        options={PLACES}
-                        label="Local"
-                        formik={formik}
-                        field="place"
-                        value={formik.values.place}
-                        disabled={formik.values.device === "Carrinho 2"}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 w-full">
-                    <div className="py-2">
-                      <ScheduleIcon />
-                    </div>
-                    <div className="flex gap-4 flex-col w-full">
-                      <FormControl
-                        error={Boolean(formik.errors.date)}
-                        sx={{ width: "100%" }}
-                      >
-                        <MobileDatePicker
-                          name="date"
-                          label="Data"
-                          disablePast
-                          onChange={(value) => {
-                            blockTimeStringOptions(value, formik.values.device);
-                            formik.setFieldValue("timeString", "");
-                            formik.setFieldValue("date", value);
-                          }}
-                          value={formik.values.date}
+                <form
+                  onSubmit={formik.handleSubmit}
+                  className="flex flex-col items-center gap-4 w-full"
+                >
+                  <CustomAutocomplete
+                    options={DEVICES}
+                    label="Dispositivo"
+                    formik={formik}
+                    field="device"
+                    checkForVicentina
+                  />
+                  <div className="flex flex-col w-full gap-8 py-4">
+                    <div className="flex gap-2 w-full">
+                      <div className="py-2">
+                        <PersonIcon />
+                      </div>
+                      <div className="flex gap-4 flex-col w-full">
+                        <CustomTextField
+                          label="Seu Nome"
+                          field="name"
+                          formik={formik}
                         />
-                        <FormHelperText>{formik.errors.date}</FormHelperText>
-                      </FormControl>
-                      <FormControl>
-                        <Autocomplete
-                          fullWidth
-                          disablePortal
-                          disabled={
-                            !formik.values.date || !formik.values.device
-                          }
-                          options={timeStringOptions}
-                          getOptionDisabled={(option) =>
-                            option.includes(BOOKED)
-                          }
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label={"Horário"}
-                              error={Boolean(formik.errors.timeString)}
-                              helperText={formik.errors.timeString}
-                            />
+                        <CustomTextField
+                          label="Nome do companheiro(a)"
+                          field="partner"
+                          formik={formik}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 w-full">
+                      <div className="py-2">
+                        <LocationOn />
+                      </div>
+                      <div className="flex gap-4 flex-col w-full">
+                        <CustomAutocomplete
+                          options={PLACES}
+                          label="Local"
+                          formik={formik}
+                          field="place"
+                          value={formik.values.place}
+                          disabled={formik.values.device === "Carrinho 2"}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 w-full">
+                      <div className="py-2">
+                        <ScheduleIcon />
+                      </div>
+                      <div className="flex gap-4 flex-col w-full">
+                        <FormControl
+                          error={Boolean(formik.errors.date)}
+                          sx={{ width: "100%" }}
+                        >
+                          <MobileDatePicker
+                            name="date"
+                            label="Data"
+                            disablePast
+                            onChange={(value) => {
+                              blockTimeStringOptions(
+                                value,
+                                formik.values.device
+                              );
+                              formik.setFieldValue("timeString", "");
+                              formik.setFieldValue("date", value);
+                            }}
+                            value={formik.values.date}
+                          />
+                          <FormHelperText>{formik.errors.date}</FormHelperText>
+                        </FormControl>
+                        <FormControl>
+                          <Autocomplete
+                            fullWidth
+                            disablePortal
+                            disabled={
+                              !formik.values.date || !formik.values.device
+                            }
+                            options={timeStringOptions}
+                            getOptionDisabled={(option) =>
+                              option.includes(BOOKED)
+                            }
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                label={"Horário"}
+                                error={Boolean(formik.errors.timeString)}
+                                helperText={formik.errors.timeString}
+                              />
+                            )}
+                            value={formik.values.timeString}
+                            onChange={(_e, value) =>
+                              handleTimeChange(formik, value)
+                            }
+                          />
+                          {!formik.values.device ? (
+                            <FormHelperText>
+                              Selecione um dispositivo
+                            </FormHelperText>
+                          ) : (
+                            <FormHelperText>
+                              {!formik.values.date && "Selecione uma data"}
+                            </FormHelperText>
                           )}
-                          value={formik.values.timeString}
-                          onChange={(_e, value) =>
-                            handleTimeChange(formik, value)
-                          }
-                        />
-                        {!formik.values.device ? (
-                          <FormHelperText>
-                            Selecione um dispositivo
-                          </FormHelperText>
-                        ) : (
-                          <FormHelperText>
-                            {!formik.values.date && "Selecione uma data"}
-                          </FormHelperText>
-                        )}
-                      </FormControl>
+                        </FormControl>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex w-full justify-end">
-                  <Button variant="contained" type="submit" size="large">
-                    reservar
-                  </Button>
-                </div>
-              </form>
-            </LocalizationProvider>
-          )}
-        </Formik>
+                  <div className="flex w-full justify-end">
+                    <Button variant="contained" type="submit" size="large">
+                      reservar
+                    </Button>
+                  </div>
+                </form>
+              </LocalizationProvider>
+            )}
+          </Formik>
+        )}
       </div>
     </>
   );

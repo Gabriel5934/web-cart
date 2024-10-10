@@ -17,42 +17,22 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  getDocs,
-  collection,
-  Timestamp,
-  query,
-  orderBy,
-  doc,
-  deleteDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import Link from "next/link";
-import { db } from "./firebase";
-import _ from "lodash";
+import { db } from "./firebase/firebase";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
 import { useSearchParams } from "next/navigation";
 import { createRef, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
+
 import publicMinistry from "./assets/publicMinistry.jpg";
 import Image from "next/image";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-
-interface BookingDoc {
-  id: string;
-  device: string;
-  name: string;
-  partner: string;
-  place: string;
-  date: Timestamp;
-  returned: boolean;
-}
+import { useGetBookings } from "./firebase/bookings/controller";
 
 interface Booking {
   id: string;
@@ -65,7 +45,6 @@ interface Booking {
 }
 
 dayjs.locale("pt-br");
-dayjs.extend(isSameOrAfter);
 dayjs.extend(isBetween);
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -74,6 +53,10 @@ const SAFE_DELETE_TEXT = "Esplanada";
 
 export default function Page() {
   const searchParams = useSearchParams();
+  const { dates, bookingsByDate, loading, refresh } = useGetBookings(
+    false,
+    true
+  );
 
   const showSnackbar = Boolean(searchParams.get("success"));
   const anchorId = searchParams.get("id") ?? "";
@@ -81,55 +64,11 @@ export default function Page() {
   const anchorRef = createRef<HTMLDivElement>();
 
   const [snackbarOpen, setSnackbarOpen] = useState(showSnackbar);
-  const [dates, setDates] = useState<Array<keyof _.Dictionary<Booking[]>>>([]);
-  const [bookingsByDate, setBookingsByDate] = useState<_.Dictionary<Booking[]>>(
-    {}
-  );
-  const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerBooking, setDrawerBooking] = useState<Booking>();
   const [safeDeleteText, setSafeDeleteText] = useState("");
 
   const closeSnackbar = () => setSnackbarOpen(false);
-
-  const fetchData = async () => {
-    const q = query(collection(db, "bookings"), orderBy("date"));
-    const querySnapshot = await getDocs(q);
-
-    const bookings: Array<Booking> = [];
-
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as BookingDoc;
-      const formatted: Booking = {
-        ...data,
-        id: doc.id,
-        date: dayjs(data.date.toDate()),
-        returned: data.returned ?? false,
-      };
-
-      bookings.push(formatted);
-    });
-
-    const dateFilteredBookings = _.orderBy(
-      bookings.filter((booking) =>
-        booking.date.isSameOrAfter(dayjs().startOf("day"))
-      ),
-      "initialTime"
-    );
-
-    const grouped = _.groupBy(dateFilteredBookings, (booking) =>
-      booking.date.startOf("day")
-    );
-
-    setBookingsByDate(grouped);
-    setDates(Object.keys(grouped));
-
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   useEffect(() => {
     if (anchorRef.current) {
@@ -139,7 +78,7 @@ export default function Page() {
         block: "center",
       });
     }
-  }, [dates, anchorRef]);
+  }, [anchorRef]);
 
   const Booking = (booking: Booking) => {
     const isAnchor = anchorId === booking.id;
@@ -247,7 +186,7 @@ export default function Page() {
     await deleteDoc(doc(db, "bookings", id));
 
     setDrawerOpen(false);
-    fetchData();
+    refresh();
   };
 
   const returnBooking = async (id: string, returned: boolean) => {
@@ -258,7 +197,7 @@ export default function Page() {
     });
 
     setDrawerOpen(false);
-    fetchData();
+    refresh();
   };
 
   return (

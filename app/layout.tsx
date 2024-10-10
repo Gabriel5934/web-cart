@@ -6,13 +6,30 @@ import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-import { Paper, BottomNavigation, BottomNavigationAction } from "@mui/material";
+import {
+  Paper,
+  BottomNavigation,
+  BottomNavigationAction,
+  Snackbar,
+  Alert,
+  AlertColor,
+} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
-import { Suspense, useEffect, useState } from "react";
+import { createContext, Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+
+interface SnackbarProps {
+  severity: AlertColor;
+  message: string;
+}
+
+export const Context = createContext({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  openSnackBar: (props: SnackbarProps) => {},
+});
 
 export default function RootLayout({
   children,
@@ -24,10 +41,24 @@ export default function RootLayout({
   const pathname = usePathname();
   const pathIndex = routes.indexOf(pathname);
   const [tab, setTab] = useState(pathIndex);
+  const [showSnackBar, setShowSnackBar] = useState(false);
+  const [snackBarProps, setSnackBarProps] = useState<SnackbarProps>({
+    severity: "info",
+    message: "",
+  });
 
   const changeTab = (_event: unknown, tab: number) => {
     setTab(tab);
     router.push(routes[tab]);
+  };
+
+  const closeSnackBar = () => {
+    setShowSnackBar(false);
+  };
+
+  const openSnackBar = (props: SnackbarProps) => {
+    setSnackBarProps(props);
+    setShowSnackBar(true);
   };
 
   useEffect(() => {
@@ -40,8 +71,27 @@ export default function RootLayout({
         <title>Jardim Esplanada</title>
       </head>
       <body>
+        <Snackbar
+          open={showSnackBar}
+          autoHideDuration={6000}
+          onClose={closeSnackBar}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert
+            onClose={closeSnackBar}
+            severity={snackBarProps.severity}
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            {snackBarProps.message}
+          </Alert>
+        </Snackbar>
         <div className="mb-16">
-          <Suspense>{children}</Suspense>
+          <Suspense>
+            <Context.Provider value={{ openSnackBar }}>
+              {children}
+            </Context.Provider>
+          </Suspense>
         </div>
         <Paper
           sx={{ position: "fixed", bottom: 0, left: 0, right: 0 }}
