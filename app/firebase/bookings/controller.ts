@@ -1,7 +1,6 @@
 import { query, collection, getDocs, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { useContext, useEffect, useState } from "react";
-import { Context } from "../../layout";
 import _ from "lodash";
 import { Booking } from "./types";
 import {
@@ -9,6 +8,7 @@ import {
   getLastBookingForDevices,
   groupByDates,
 } from "./service";
+import { Context } from "@/app/context";
 
 export function useGetBookings(showSucces: boolean, showError: boolean) {
   const context = useContext(Context);

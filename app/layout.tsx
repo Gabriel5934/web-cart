@@ -12,28 +12,17 @@ import {
   BottomNavigationAction,
   Snackbar,
   Alert,
-  AlertColor,
   Button,
   Stack,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
-import { createContext, Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-
-interface SnackbarProps {
-  severity: AlertColor;
-  message: string;
-  error: string;
-}
-
-export const Context = createContext({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  openSnackBar: (props: SnackbarProps) => {},
-});
+import { Context, SnackbarProps } from "./context";
 
 export default function RootLayout({
   children,
@@ -106,11 +95,9 @@ export default function RootLayout({
           </Alert>
         </Snackbar>
         <div className="mb-16">
-          <Suspense>
-            <Context.Provider value={{ openSnackBar }}>
-              {children}
-            </Context.Provider>
-          </Suspense>
+          <Context.Provider value={{ openSnackBar }}>
+            <Suspense>{children}</Suspense>
+          </Context.Provider>
         </div>
         <Paper
           sx={{ position: "fixed", bottom: 0, left: 0, right: 0 }}
