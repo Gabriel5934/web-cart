@@ -92,7 +92,7 @@ const PLACES = [
   "Vicentina Aranha",
 ];
 
-const DEVICES = ["Carrinho 1", "Carrinho 2 (Vicentina)", "Display"];
+const DEVICES = ["Carrinho 1", "Carrinho 2", "Display"];
 
 const BOOKED = "Reservado";
 
@@ -190,7 +190,7 @@ export default function Page() {
     const updatePlace = (newDevice: string) => {
       if (!checkForVicentina) return;
 
-      if (newDevice === "Carrinho 2 (Vicentina)") {
+      if (newDevice === "Carrinho 2") {
         formik.setFieldValue("place", "Vicentina Aranha");
       } else if (formik.values.place === "Vicentina Aranha") {
         formik.setFieldValue("place", "");
@@ -379,9 +379,7 @@ export default function Page() {
                         formik={formik}
                         field="place"
                         value={formik.values.place}
-                        disabled={
-                          formik.values.device === "Carrinho 2 (Vicentina)"
-                        }
+                        disabled={formik.values.device === "Carrinho 2"}
                       />
                     </div>
                   </div>

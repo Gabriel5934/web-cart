@@ -38,7 +38,7 @@ export default function Page() {
     Record<string, Booking | undefined>
   >({
     "Carrinho 1": undefined,
-    "Carrinho 2 (Vicentina)": undefined,
+    "Carrinho 2": undefined,
     Display: undefined,
   });
 
@@ -63,7 +63,7 @@ export default function Page() {
     const byDevice = _.groupBy(bookings, "device");
     const toBeLastBookings: Record<string, Booking | undefined> = {
       "Carrinho 1": undefined,
-      "Carrinho 2 (Vicentina)": undefined,
+      "Carrinho 2": undefined,
       Display: undefined,
     };
 
