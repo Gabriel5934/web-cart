@@ -113,7 +113,7 @@ export default function Page() {
     if (isAnchor) {
       return (
         <Grow in={true} timeout={3000}>
-          <IconButton onClick={onClick}>
+          <IconButton onClick={onClick} sx={{ width: "100%" }}>
             <Paper
               sx={{
                 bgcolor: "primary.main",
