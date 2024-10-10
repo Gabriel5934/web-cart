@@ -41,6 +41,7 @@ export function useGetBookings(showSucces: boolean, showError: boolean) {
         context.openSnackBar({
           severity: "success",
           message: `${bookings.length} reservas encontradas`,
+          error: "",
         });
       }
 
@@ -55,6 +56,7 @@ export function useGetBookings(showSucces: boolean, showError: boolean) {
         context.openSnackBar({
           severity: "error",
           message: "Algo deu errado",
+          error: `${error}`,
         });
       }
     } finally {

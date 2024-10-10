@@ -13,6 +13,9 @@ import {
   Snackbar,
   Alert,
   AlertColor,
+  Button,
+  Stack,
+  Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
@@ -24,6 +27,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 interface SnackbarProps {
   severity: AlertColor;
   message: string;
+  error: string;
 }
 
 export const Context = createContext({
@@ -45,6 +49,7 @@ export default function RootLayout({
   const [snackBarProps, setSnackBarProps] = useState<SnackbarProps>({
     severity: "info",
     message: "",
+    error: "",
   });
 
   const changeTab = (_event: unknown, tab: number) => {
@@ -83,7 +88,21 @@ export default function RootLayout({
             variant="filled"
             sx={{ width: "100%" }}
           >
-            {snackBarProps.message}
+            <Stack spacing={1}>
+              <Typography>{snackBarProps.message}</Typography>
+              {snackBarProps.severity === "error" && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="warning"
+                  onClick={() =>
+                    navigator.clipboard.writeText(snackBarProps.error)
+                  }
+                >
+                  copiar erro
+                </Button>
+              )}
+            </Stack>
           </Alert>
         </Snackbar>
         <div className="mb-16">
