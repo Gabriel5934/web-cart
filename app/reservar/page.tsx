@@ -86,6 +86,7 @@ const PLACES = [
   "Praça Romão Gomes",
   "Parque Ribeirão Vermelho",
   "Feira do Urbanova",
+  "Vicentina Aranha",
 ];
 
 const DEVICES = ["Carrinho 1", "Carrinho 2 (Vicentina)", "Display"];
