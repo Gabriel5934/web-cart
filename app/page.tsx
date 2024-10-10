@@ -30,7 +30,7 @@ import {
 import Link from "next/link";
 import { db } from "./firebase";
 import _ from "lodash";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
 import { useSearchParams } from "next/navigation";
 import { createRef, useEffect, useState } from "react";
@@ -60,7 +60,7 @@ interface Booking {
   name: string;
   partner: string;
   place: string;
-  date: Date;
+  date: Dayjs;
   returned: boolean;
 }
 
@@ -103,7 +103,7 @@ export default function Page() {
       const formatted: Booking = {
         ...data,
         id: doc.id,
-        date: data.date.toDate(),
+        date: dayjs(data.date.toDate()),
         returned: data.returned ?? false,
       };
 
@@ -112,13 +112,13 @@ export default function Page() {
 
     const dateFilteredBookings = _.orderBy(
       bookings.filter((booking) =>
-        dayjs(booking.date).isSameOrAfter(dayjs().startOf("day"))
+        booking.date.isSameOrAfter(dayjs().startOf("day"))
       ),
       "initialTime"
     );
 
     const grouped = _.groupBy(dateFilteredBookings, (booking) =>
-      dayjs(booking.date).startOf("day")
+      booking.date.startOf("day")
     );
 
     setBookingsByDate(grouped);
@@ -144,16 +144,16 @@ export default function Page() {
   const Booking = (booking: Booking) => {
     const isAnchor = anchorId === booking.id;
 
-    const isPast = dayjs(booking.date).add(2, "hour").isBefore(dayjs());
+    const isPast = booking.date.add(2, "hour").isBefore(dayjs());
 
     const isCurrent = dayjs().isBetween(
       booking.date,
-      dayjs(booking.date).add(2, "hour")
+      booking.date.add(2, "hour")
     );
 
     const isNext = dayjs().isBetween(
-      dayjs(booking.date),
-      dayjs(booking.date).subtract(2, "hours")
+      booking.date,
+      booking.date.subtract(2, "hours")
     );
 
     const showChip = isCurrent || isNext;
@@ -162,7 +162,7 @@ export default function Page() {
       if (isCurrent) {
         return "Agora";
       } else if (isNext) {
-        return dayjs.duration(dayjs(booking.date).diff(dayjs())).humanize(true);
+        return dayjs.duration(booking.date.diff(dayjs())).humanize(true);
       }
     };
 
@@ -189,13 +189,9 @@ export default function Page() {
               </Typography>
               <div className="flex gap-4">
                 <Typography variant="body1">
-                  {booking.date.toLocaleTimeString("pt-br").slice(0, 5)}
+                  {booking.date.format("HH:mm")}
                   {" - "}
-                  {dayjs(booking.date)
-                    .add(2, "hour")
-                    .toDate()
-                    .toLocaleTimeString("pt-br")
-                    .slice(0, 5)}
+                  {booking.date.add(2, "hour").format("HH:mm")}
                 </Typography>
                 <Typography variant="body1">
                   {booking.name} e {booking.partner}
@@ -233,13 +229,9 @@ export default function Page() {
             </div>
             <div className="flex gap-4">
               <Typography variant="body1">
-                {booking.date.toLocaleTimeString("pt-br").slice(0, 5)}
+                {booking.date.format("HH:mm")}
                 {" - "}
-                {dayjs(booking.date)
-                  .add(2, "hour")
-                  .toDate()
-                  .toLocaleTimeString("pt-br")
-                  .slice(0, 5)}
+                {booking.date.add(2, "hour").format("HH:mm")}
               </Typography>
               <Typography variant="body1">
                 {booking.name} e {booking.partner}
@@ -308,13 +300,9 @@ export default function Page() {
           </div>
           <div className="flex gap-4">
             <Typography variant="h5">
-              {drawerBooking?.date.toLocaleTimeString("pt-br").slice(0, 5)}
+              {drawerBooking?.date.format("HH:mm")}
               {" - "}
-              {dayjs(drawerBooking?.date)
-                .add(2, "hour")
-                .toDate()
-                .toLocaleTimeString("pt-br")
-                .slice(0, 5)}
+              {drawerBooking?.date.add(2, "hour").format("HH:mm")}
             </Typography>
             <Typography variant="h5">
               {drawerBooking?.name} e {drawerBooking?.partner}
@@ -322,14 +310,14 @@ export default function Page() {
           </div>
         </Box>
         <Accordion
-          disabled={drawerBooking && dayjs(drawerBooking.date).isAfter(dayjs())}
+          disabled={drawerBooking && drawerBooking.date.isAfter(dayjs())}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Stack direction="row" spacing={1} alignItems="center">
               <Typography variant="h6">Devolver</Typography>
               <Typography>
                 {drawerBooking &&
-                  dayjs(drawerBooking.date).isAfter(dayjs()) &&
+                  drawerBooking.date.isAfter(dayjs()) &&
                   "(Liberado após o fim da reserva)"}
               </Typography>
               {drawerBooking && drawerBooking.returned && (

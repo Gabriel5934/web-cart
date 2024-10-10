@@ -63,7 +63,7 @@ interface Booking {
   name: string;
   partner: string;
   place: string;
-  date: Date;
+  date: Dayjs;
   returned: boolean;
 }
 
@@ -190,6 +190,10 @@ export default function Page() {
     const updatePlace = (newDevice: string) => {
       if (!checkForVicentina) return;
 
+      if (formik.values.date) {
+        blockTimeStringOptions(formik.values.date, newDevice);
+      }
+
       if (newDevice === "Carrinho 2") {
         formik.setFieldValue("place", "Vicentina Aranha");
       } else if (formik.values.place === "Vicentina Aranha") {
@@ -231,7 +235,7 @@ export default function Page() {
       const formatted = {
         ...data,
         id: doc.id,
-        date: data.date.toDate(),
+        date: dayjs(data.date.toDate()),
       };
 
       bookings.push(formatted);
@@ -240,18 +244,16 @@ export default function Page() {
     setBookings(bookings);
   };
 
-  const blockTimeStringOptions = (newDate: Dayjs | null, values: Inputs) => {
+  const blockTimeStringOptions = (newDate: Dayjs | null, device: string) => {
     if (!newDate) return;
-
-    const { device } = values;
 
     const currentContextsBookings = bookings.filter(
       (booking) =>
-        dayjs(booking.date).isSame(newDate, "day") && booking.device === device
+        booking.date.isSame(newDate, "day") && booking.device === device
     );
 
     const bookedOptions = currentContextsBookings.map((booking) => {
-      return `${dayjs(booking.date).format("HH:mm")} - ${dayjs(booking.date)
+      return `${booking.date.format("HH:mm")} - ${booking.date
         .add(2, "hour")
         .format("HH:mm")}`;
     });
@@ -397,7 +399,7 @@ export default function Page() {
                           label="Data"
                           disablePast
                           onChange={(value) => {
-                            blockTimeStringOptions(value, formik.values);
+                            blockTimeStringOptions(value, formik.values.device);
                             formik.setFieldValue("timeString", "");
                             formik.setFieldValue("date", value);
                           }}
