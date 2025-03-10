@@ -1,14 +1,41 @@
-import { query, collection, getDocs, orderBy } from "firebase/firestore";
+import {
+  query,
+  collection,
+  getDocs,
+  orderBy,
+  addDoc,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import { useContext, useEffect, useState } from "react";
 import _ from "lodash";
-import { Booking } from "./types";
+import { Booking, BookingDoc } from "./types";
 import {
   formatBookings,
   getLastBookingForDevices,
   groupByDates,
 } from "./service";
 import { Context } from "@/app/context";
+
+const getCollectionName = (hostname: string) => {
+  switch (hostname) {
+    case "web-cart-git-develop-gabriel5934s-projects.vercel.app":
+      return "bookingsDev";
+    default:
+      return "bookings";
+  }
+};
+
+export function useAddBooking() {
+  const add = (booking: Omit<BookingDoc, "id">) => {
+    const docRef = addDoc(
+      collection(db, getCollectionName(window.location.hostname)),
+      booking
+    );
+    return docRef;
+  };
+
+  return { add };
+}
 
 export function useGetBookings(showSucces: boolean, showError: boolean) {
   const context = useContext(Context);
@@ -30,7 +57,12 @@ export function useGetBookings(showSucces: boolean, showError: boolean) {
     try {
       setLoading(true);
 
-      const q = query(collection(db, "bookings"), orderBy("date"));
+      console.log(window.location.hostname);
+
+      const q = query(
+        collection(db, getCollectionName(window.location.hostname)),
+        orderBy("date")
+      );
       const querySnapshot = await getDocs(q);
 
       const bookings = formatBookings(querySnapshot);

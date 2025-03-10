@@ -20,8 +20,7 @@ import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
 import dayjs, { Dayjs } from "dayjs";
-import { addDoc, collection, Timestamp } from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
@@ -30,7 +29,7 @@ import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br";
-import { useGetBookings } from "../firebase/bookings/controller";
+import { useAddBooking, useGetBookings } from "../firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -84,6 +83,7 @@ const BOOKED = "Reservado";
 
 export default function Page() {
   const { bookings, loading } = useGetBookings(false, true);
+  const { add } = useAddBooking();
 
   const router = useRouter();
   const [showBackdrop, setShowBackdrop] = useState(false);
@@ -103,7 +103,7 @@ export default function Page() {
 
     try {
       setShowBackdrop(true);
-      const docRef = await addDoc(collection(db, "bookings"), formatted);
+      const docRef = await add(formatted);
       router.push(`/?success=true&id=${docRef.id}`);
     } catch (e) {
       setShowBackdrop(false);
