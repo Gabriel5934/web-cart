@@ -1,7 +1,4 @@
 import {
-  Grow,
-  IconButton,
-  Paper,
   Typography,
   Stack,
   Card,
@@ -10,8 +7,8 @@ import {
   Button,
 } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
-import { useSearchParams } from "next/navigation";
-import { createRef } from "react";
+import { RefObject } from "react";
+import GrowWrapper from "./Grow";
 
 interface Booking {
   id: string;
@@ -28,15 +25,11 @@ interface Props {
   setDrawerOpen: (open: boolean) => void;
   setDrawerBooking: (booking: Booking) => void;
   setReturnModal: (open: boolean) => void;
+  anchorRef: RefObject<HTMLDivElement>;
+  index: number;
 }
 
 export default function Booking(props: Props) {
-  const searchParams = useSearchParams();
-  const anchorId = searchParams.get("id") ?? "";
-  const anchorRef = createRef<HTMLDivElement>();
-
-  const isAnchor = anchorId === props.booking.id;
-
   const isPast = props.booking.date.add(2, "hour").isBefore(dayjs());
 
   const isCurrent = dayjs().isBetween(
@@ -64,38 +57,8 @@ export default function Booking(props: Props) {
     props.setDrawerBooking(props.booking);
   };
 
-  if (isAnchor) {
-    return (
-      <Grow in={true} timeout={3000}>
-        <IconButton onClick={onClick} sx={{ width: "100%" }}>
-          <Paper
-            sx={{
-              bgcolor: "primary.main",
-              color: "white",
-            }}
-            className="flex flex-col p-4 rounded-md text-white w-full"
-            id={props.booking.id}
-            ref={anchorRef}
-          >
-            <Typography variant="body2" className="text-left">
-              {props.booking.device} - {props.booking.place}
-            </Typography>
-            <div className="flex gap-4">
-              <Typography variant="body1">
-                {props.booking.date.format("HH:mm")}
-                {" - "}
-                {props.booking.date.add(2, "hour").format("HH:mm")}
-              </Typography>
-              <Typography variant="body1">
-                {props.booking.name} e {props.booking.partner}
-              </Typography>
-            </div>
-          </Paper>
-        </IconButton>
-      </Grow>
-    );
-  } else {
-    return (
+  return (
+    <GrowWrapper grow={true} index={props.index}>
       <Stack className="w-full" gap={1} sx={{ marginBottom: 2 }}>
         <Card
           sx={{
@@ -105,6 +68,7 @@ export default function Booking(props: Props) {
           }}
           className="flex flex-col p-4 rounded-md text-white w-full"
           id={props.booking.id}
+          ref={props.anchorRef}
         >
           <CardActionArea onClick={onClick}>
             <div
@@ -148,6 +112,6 @@ export default function Booking(props: Props) {
           </Button>
         )}
       </Stack>
-    );
-  }
+    </GrowWrapper>
+  );
 }

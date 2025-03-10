@@ -29,11 +29,7 @@ import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br";
-import {
-  DEV_HOSTNAME,
-  useAddBooking,
-  useBookings,
-} from "../firebase/bookings/controller";
+import { DEV_HOSTNAME, useBookings } from "../firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -87,7 +83,7 @@ const BOOKED = "Reservado";
 
 export default function Page() {
   const { bookings, loading } = useBookings(false, true);
-  const { add } = useAddBooking();
+  const { addData } = useBookings(false, true);
 
   const router = useRouter();
   const [showBackdrop, setShowBackdrop] = useState(false);
@@ -107,7 +103,7 @@ export default function Page() {
 
     try {
       setShowBackdrop(true);
-      const docRef = await add(formatted);
+      const docRef = await addData(formatted);
       router.push(`/?success=true&id=${docRef.id}`);
     } catch (e) {
       setShowBackdrop(false);

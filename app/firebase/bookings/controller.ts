@@ -32,18 +32,6 @@ const getCollectionName = (hostname: string) => {
   }
 };
 
-export function useAddBooking() {
-  const add = (booking: Omit<BookingDoc, "id">) => {
-    const docRef = addDoc(
-      collection(db, getCollectionName(window.location.hostname)),
-      booking
-    );
-    return docRef;
-  };
-
-  return { add };
-}
-
 export function useBookings(showSucces: boolean, showError: boolean) {
   const context = useContext(Context);
   const [bookings, setBookings] = useState<Array<Booking>>([]);
@@ -110,11 +98,11 @@ export function useBookings(showSucces: boolean, showError: boolean) {
   }
 
   function deleteData(id: string) {
-    return deleteDoc(doc(db, "bookings", id));
+    return deleteDoc(doc(db, getCollectionName(window.location.hostname), id));
   }
 
   async function toggleReturned(id: string) {
-    const bookingRef = doc(db, "bookings", id);
+    const bookingRef = doc(db, getCollectionName(window.location.hostname), id);
     const bookingSnap = await getDoc(bookingRef);
     const data = bookingSnap.data();
 

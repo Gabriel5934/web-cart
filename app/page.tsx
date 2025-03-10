@@ -239,7 +239,7 @@ export default function Page() {
           {loading ? (
             <Skeleton height={100} width={"100%"} count={5} />
           ) : (
-            dates.map((date) => (
+            dates.map((date, index) => (
               <Box key={date}>
                 <Typography variant="h6">
                   {dayjs(new Date(date)).format("D")}
@@ -255,6 +255,8 @@ export default function Page() {
                     setDrawerOpen={setDrawerOpen}
                     setReturnModal={setReturnModal}
                     key={booking.date.toISOString()}
+                    anchorRef={anchorRef}
+                    index={index}
                   />
                 ))}
               </Box>
