@@ -26,7 +26,7 @@ export function useGetBookings(showSucces: boolean, showError: boolean) {
     Display: undefined,
   });
 
-  async function fetchData() {
+  async function fetchData(backwardsRange: number = 0) {
     try {
       setLoading(true);
 
@@ -34,7 +34,7 @@ export function useGetBookings(showSucces: boolean, showError: boolean) {
       const querySnapshot = await getDocs(q);
 
       const bookings = formatBookings(querySnapshot);
-      const { grouped, dates } = groupByDates(bookings);
+      const { grouped, dates } = groupByDates(bookings, backwardsRange);
       const toBeLastBookings = getLastBookingForDevices(bookings);
 
       if (showSucces) {

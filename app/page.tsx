@@ -5,13 +5,12 @@ import {
   AccordionDetails,
   AccordionSummary,
   Alert,
+  Backdrop,
   Box,
   Button,
-  Chip,
   Drawer,
-  Grow,
-  IconButton,
-  Paper,
+  Fade,
+  Modal,
   Snackbar,
   Stack,
   TextField,
@@ -33,6 +32,8 @@ import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useGetBookings } from "./firebase/bookings/controller";
+import { History } from "@mui/icons-material";
+import Booking from "./components/Booking";
 
 interface Booking {
   id: string;
@@ -57,18 +58,44 @@ export default function Page() {
     false,
     true
   );
-
   const showSnackbar = Boolean(searchParams.get("success"));
-  const anchorId = searchParams.get("id") ?? "";
-
   const anchorRef = createRef<HTMLDivElement>();
 
   const [snackbarOpen, setSnackbarOpen] = useState(showSnackbar);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [returnModal, setReturnModal] = useState(false);
   const [drawerBooking, setDrawerBooking] = useState<Booking>();
   const [safeDeleteText, setSafeDeleteText] = useState("");
+  const [historyShown, setHistoryShown] = useState(false);
 
   const closeSnackbar = () => setSnackbarOpen(false);
+
+  const refreshWithHistory = () => refresh(historyShown ? 30 : 0);
+
+  const toggleHistory = () => {
+    setHistoryShown(!historyShown);
+    refresh(historyShown ? 0 : 30);
+  };
+
+  const deleteBooking = async (id: string) => {
+    await deleteDoc(doc(db, "bookings", id));
+
+    setDrawerOpen(false);
+    refreshWithHistory();
+  };
+
+  const toggleReturn = async (id: string) => {
+    if (!drawerBooking) return;
+
+    const bookingRef = doc(db, "bookings", id);
+
+    await updateDoc(bookingRef, {
+      returned: !drawerBooking.returned,
+    });
+
+    setReturnModal(false);
+    refreshWithHistory();
+  };
 
   useEffect(() => {
     if (anchorRef.current) {
@@ -79,126 +106,6 @@ export default function Page() {
       });
     }
   }, [anchorRef]);
-
-  const Booking = (booking: Booking) => {
-    const isAnchor = anchorId === booking.id;
-
-    const isPast = booking.date.add(2, "hour").isBefore(dayjs());
-
-    const isCurrent = dayjs().isBetween(
-      booking.date,
-      booking.date.add(2, "hour")
-    );
-
-    const isNext = dayjs().isBetween(
-      booking.date,
-      booking.date.subtract(2, "hours")
-    );
-
-    const showChip = isCurrent || isNext;
-
-    const getChipLabel = () => {
-      if (isCurrent) {
-        return "Agora";
-      } else if (isNext) {
-        return dayjs.duration(booking.date.diff(dayjs())).humanize(true);
-      }
-    };
-
-    const onClick = () => {
-      setDrawerOpen(true);
-      setDrawerBooking(booking);
-    };
-
-    if (isAnchor) {
-      return (
-        <Grow in={true} timeout={3000}>
-          <IconButton onClick={onClick} sx={{ width: "100%" }}>
-            <Paper
-              sx={{
-                bgcolor: "primary.main",
-                color: "white",
-              }}
-              className="flex flex-col p-4 rounded-md text-white w-full"
-              id={booking.id}
-              ref={anchorRef}
-            >
-              <Typography variant="body2" className="text-left">
-                {booking.device} - {booking.place}
-              </Typography>
-              <div className="flex gap-4">
-                <Typography variant="body1">
-                  {booking.date.format("HH:mm")}
-                  {" - "}
-                  {booking.date.add(2, "hour").format("HH:mm")}
-                </Typography>
-                <Typography variant="body1">
-                  {booking.name} e {booking.partner}
-                </Typography>
-              </div>
-            </Paper>
-          </IconButton>
-        </Grow>
-      );
-    } else {
-      return (
-        <IconButton onClick={onClick} sx={{ width: "100%" }}>
-          <Paper
-            sx={{
-              bgcolor: "primary.main",
-              filter: `brightness(${isPast ? 0.5 : 1})`,
-              color: "white",
-            }}
-            className="flex flex-col p-4 rounded-md text-white w-full"
-            id={booking.id}
-          >
-            <div
-              className="flex justify-between items-center"
-              style={{
-                marginBottom: showChip ? 8 : 0,
-                textTransform: "capitalize",
-              }}
-            >
-              <Typography variant="body2">
-                {booking.device} - {booking.place}
-              </Typography>
-              {showChip && (
-                <Chip label={getChipLabel()} color="warning" size="small" />
-              )}
-            </div>
-            <div className="flex gap-4">
-              <Typography variant="body1">
-                {booking.date.format("HH:mm")}
-                {" - "}
-                {booking.date.add(2, "hour").format("HH:mm")}
-              </Typography>
-              <Typography variant="body1">
-                {booking.name} e {booking.partner}
-              </Typography>
-            </div>
-          </Paper>
-        </IconButton>
-      );
-    }
-  };
-
-  const deleteBooking = async (id: string) => {
-    await deleteDoc(doc(db, "bookings", id));
-
-    setDrawerOpen(false);
-    refresh();
-  };
-
-  const returnBooking = async (id: string, returned: boolean) => {
-    const bookingRef = doc(db, "bookings", id);
-
-    await updateDoc(bookingRef, {
-      returned,
-    });
-
-    setDrawerOpen(false);
-    refresh();
-  };
 
   return (
     <>
@@ -217,6 +124,7 @@ export default function Page() {
           Reserva feita!
         </Alert>
       </Snackbar>
+
       <Drawer
         open={drawerOpen}
         anchor="bottom"
@@ -248,57 +156,6 @@ export default function Page() {
             </Typography>
           </div>
         </Box>
-        <Accordion
-          disabled={drawerBooking && drawerBooking.date.isAfter(dayjs())}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="h6">Devolver</Typography>
-              <Typography>
-                {drawerBooking &&
-                  drawerBooking.date.isAfter(dayjs()) &&
-                  "(Liberado após o fim da reserva)"}
-              </Typography>
-              {drawerBooking && drawerBooking.returned && (
-                <Chip color="success" label="Devolvido" />
-              )}
-            </Stack>
-          </AccordionSummary>
-          <AccordionDetails>
-            {drawerBooking &&
-              (drawerBooking.returned ? (
-                <Stack spacing={1}>
-                  <Typography>
-                    Clique nesse botão apenas se você{" "}
-                    <strong> não devolveu</strong> o carrinho no salão
-                  </Typography>
-                  <Box sx={{ textAlign: "right" }}>
-                    <Button
-                      variant="contained"
-                      onClick={() => returnBooking(drawerBooking.id, false)}
-                    >
-                      não devolvi
-                    </Button>
-                  </Box>
-                </Stack>
-              ) : (
-                <Stack spacing={1}>
-                  <Typography>
-                    Clique nesse botão apenas se você <strong>devolveu</strong>{" "}
-                    o carrinho no salão
-                  </Typography>
-                  <Box sx={{ textAlign: "right" }}>
-                    <Button
-                      variant="contained"
-                      onClick={() => returnBooking(drawerBooking.id, true)}
-                    >
-                      devolvi
-                    </Button>
-                  </Box>
-                </Stack>
-              ))}
-          </AccordionDetails>
-        </Accordion>
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6">Zona de Perigo</Typography>
@@ -330,6 +187,7 @@ export default function Page() {
           </AccordionDetails>
         </Accordion>
       </Drawer>
+
       <div className="inline-block overflow-hidden relative w-full">
         <Image
           className="pointer-events-none absolute w-full -z-10"
@@ -366,9 +224,19 @@ export default function Page() {
       </div>
 
       <Box sx={{ paddingX: 4 }}>
-        <Typography variant="h4" sx={{ marginBottom: 2 }}>
-          Próximas Reservas
-        </Typography>
+        <Stack sx={{ marginBottom: 2 }} gap={1}>
+          <Typography variant="h4">Próximas Reservas</Typography>
+          <div>
+            <Button
+              variant="outlined"
+              startIcon={<History />}
+              onClick={toggleHistory}
+            >
+              ver {historyShown ? "menos" : "mais"}
+            </Button>
+          </div>
+        </Stack>
+
         <Stack spacing={2}>
           {loading ? (
             <Skeleton height={100} width={"100%"} count={5} />
@@ -383,13 +251,65 @@ export default function Page() {
                   {dayjs(new Date(date)).format("dddd")}
                 </Typography>
                 {bookingsByDate[date].map((booking) => (
-                  <Booking {...booking} key={booking.date.toISOString()} />
+                  <Booking
+                    booking={booking}
+                    setDrawerBooking={setDrawerBooking}
+                    setDrawerOpen={setDrawerOpen}
+                    setReturnModal={setReturnModal}
+                    key={booking.date.toISOString()}
+                  />
                 ))}
               </Box>
             ))
           )}
         </Stack>
       </Box>
+
+      <Modal
+        open={returnModal}
+        onClose={() => setReturnModal(false)}
+        closeAfterTransition
+        slots={{ backdrop: Backdrop }}
+        slotProps={{
+          backdrop: {
+            timeout: 500,
+          },
+        }}
+      >
+        <Fade in={returnModal}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 400,
+              bgcolor: "background.paper",
+              boxShadow: 24,
+              p: 4,
+            }}
+          >
+            <Stack spacing={1}>
+              <Typography variant="h6" component="h2">
+                Devolver {drawerBooking?.device}
+              </Typography>
+              <Typography sx={{ mt: 2 }}>
+                Clique nesse botão apenas se você{" "}
+                {drawerBooking?.returned && "não"} <strong>devolveu</strong> o
+                carrinho no salão
+              </Typography>
+              <Box sx={{ textAlign: "right" }}>
+                <Button
+                  variant="contained"
+                  onClick={() => toggleReturn(drawerBooking?.id ?? "")}
+                >
+                  {drawerBooking?.returned && "não"} devolvi
+                </Button>
+              </Box>
+            </Stack>
+          </Box>
+        </Fade>
+      </Modal>
     </>
   );
 }

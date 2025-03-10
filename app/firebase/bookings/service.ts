@@ -25,10 +25,12 @@ export function formatBookings(
   return bookings;
 }
 
-export function groupByDates(bookings: Array<Booking>) {
+export function groupByDates(bookings: Array<Booking>, backwardsRange: number) {
   const dateFilteredBookings = _.orderBy(
     bookings.filter((booking) =>
-      booking.date.isSameOrAfter(dayjs().startOf("day"))
+      booking.date.isSameOrAfter(
+        dayjs().startOf("day").subtract(backwardsRange, "day")
+      )
     ),
     "initialTime"
   );
