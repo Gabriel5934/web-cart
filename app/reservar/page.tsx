@@ -29,7 +29,11 @@ import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br";
-import { useAddBooking, useGetBookings } from "../firebase/bookings/controller";
+import {
+  DEV_HOSTNAME,
+  useAddBooking,
+  useGetBookings,
+} from "../firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -250,6 +254,12 @@ export default function Page() {
     formik.setFieldValue("date", newDate);
   };
 
+  const shouldDisablePast = () => {
+    const hostName = window.location.hostname;
+
+    return hostName === DEV_HOSTNAME ? false : true;
+  };
+
   return (
     <>
       <Backdrop
@@ -362,7 +372,7 @@ export default function Page() {
                           <MobileDatePicker
                             name="date"
                             label="Data"
-                            disablePast
+                            disablePast={shouldDisablePast()}
                             onChange={(value) => {
                               blockTimeStringOptions(
                                 value,

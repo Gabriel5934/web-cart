@@ -16,9 +16,12 @@ import {
 } from "./service";
 import { Context } from "@/app/context";
 
+export const DEV_HOSTNAME =
+  "web-cart-git-develop-gabriel5934s-projects.vercel.app";
+
 const getCollectionName = (hostname: string) => {
   switch (hostname) {
-    case "web-cart-git-develop-gabriel5934s-projects.vercel.app":
+    case DEV_HOSTNAME:
       return "bookingsDev";
     default:
       return "bookings";
