@@ -4,6 +4,10 @@ import {
   getDocs,
   orderBy,
   addDoc,
+  doc,
+  deleteDoc,
+  updateDoc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useContext, useEffect, useState } from "react";
@@ -40,7 +44,7 @@ export function useAddBooking() {
   return { add };
 }
 
-export function useGetBookings(showSucces: boolean, showError: boolean) {
+export function useBookings(showSucces: boolean, showError: boolean) {
   const context = useContext(Context);
   const [bookings, setBookings] = useState<Array<Booking>>([]);
   const [loading, setLoading] = useState(true);
@@ -59,8 +63,6 @@ export function useGetBookings(showSucces: boolean, showError: boolean) {
   async function fetchData(backwardsRange: number = 0) {
     try {
       setLoading(true);
-
-      console.log(window.location.hostname);
 
       const q = query(
         collection(db, getCollectionName(window.location.hostname)),
@@ -99,6 +101,30 @@ export function useGetBookings(showSucces: boolean, showError: boolean) {
     }
   }
 
+  function addData(booking: Omit<BookingDoc, "id">) {
+    const docRef = addDoc(
+      collection(db, getCollectionName(window.location.hostname)),
+      booking
+    );
+    return docRef;
+  }
+
+  function deleteData(id: string) {
+    return deleteDoc(doc(db, "bookings", id));
+  }
+
+  async function toggleReturned(id: string) {
+    const bookingRef = doc(db, "bookings", id);
+    const bookingSnap = await getDoc(bookingRef);
+    const data = bookingSnap.data();
+
+    if (!data) return;
+
+    return updateDoc(bookingRef, {
+      returned: !data.returned,
+    });
+  }
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -110,5 +136,8 @@ export function useGetBookings(showSucces: boolean, showError: boolean) {
     dates,
     lastBookings,
     refresh: fetchData,
+    addData,
+    deleteData,
+    toggleReturned,
   };
 }

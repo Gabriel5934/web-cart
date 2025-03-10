@@ -16,9 +16,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import Link from "next/link";
-import { db } from "./firebase/firebase";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
 import { useSearchParams } from "next/navigation";
@@ -31,7 +29,7 @@ import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useGetBookings } from "./firebase/bookings/controller";
+import { useBookings } from "./firebase/bookings/controller";
 import { History } from "@mui/icons-material";
 import Booking from "./components/Booking";
 
@@ -54,10 +52,14 @@ const SAFE_DELETE_TEXT = "Esplanada";
 
 export default function Page() {
   const searchParams = useSearchParams();
-  const { dates, bookingsByDate, loading, refresh } = useGetBookings(
-    false,
-    true
-  );
+  const {
+    dates,
+    bookingsByDate,
+    loading,
+    refresh,
+    deleteData,
+    toggleReturned,
+  } = useBookings(false, true);
   const showSnackbar = Boolean(searchParams.get("success"));
   const anchorRef = createRef<HTMLDivElement>();
 
@@ -78,7 +80,7 @@ export default function Page() {
   };
 
   const deleteBooking = async (id: string) => {
-    await deleteDoc(doc(db, "bookings", id));
+    await deleteData(id);
 
     setDrawerOpen(false);
     refreshWithHistory();
@@ -87,11 +89,7 @@ export default function Page() {
   const toggleReturn = async (id: string) => {
     if (!drawerBooking) return;
 
-    const bookingRef = doc(db, "bookings", id);
-
-    await updateDoc(bookingRef, {
-      returned: !drawerBooking.returned,
-    });
+    await toggleReturned(id);
 
     setReturnModal(false);
     refreshWithHistory();

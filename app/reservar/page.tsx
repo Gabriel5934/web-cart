@@ -32,7 +32,7 @@ import "dayjs/locale/pt-br";
 import {
   DEV_HOSTNAME,
   useAddBooking,
-  useGetBookings,
+  useBookings,
 } from "../firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -86,7 +86,7 @@ const DEVICES = ["Carrinho 1", "Carrinho 2", "Display 1", "Display 2"];
 const BOOKED = "Reservado";
 
 export default function Page() {
-  const { bookings, loading } = useGetBookings(false, true);
+  const { bookings, loading } = useBookings(false, true);
   const { add } = useAddBooking();
 
   const router = useRouter();
