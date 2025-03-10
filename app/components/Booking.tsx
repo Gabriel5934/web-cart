@@ -96,7 +96,7 @@ export default function Booking(props: Props) {
     );
   } else {
     return (
-      <Stack className="w-full" gap={1}>
+      <Stack className="w-full" gap={1} sx={{ marginBottom: 2 }}>
         <Card
           sx={{
             bgcolor: "primary.main",
