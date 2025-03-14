@@ -8,7 +8,9 @@ import {
   Backdrop,
   Box,
   Button,
+  Chip,
   Drawer,
+  Fab,
   Fade,
   Modal,
   Snackbar,
@@ -27,10 +29,11 @@ import publicMinistry from "./assets/publicMinistry.jpg";
 import Image from "next/image";
 import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
+import isToday from "dayjs/plugin/isToday";
 import relativeTime from "dayjs/plugin/relativeTime";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useBookings } from "./firebase/bookings/controller";
-import { History } from "@mui/icons-material";
+import { History, WhatsApp } from "@mui/icons-material";
 import Booking from "./components/Booking";
 
 interface Booking {
@@ -47,6 +50,7 @@ dayjs.locale("pt-br");
 dayjs.extend(isBetween);
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
+dayjs.extend(isToday);
 
 const SAFE_DELETE_TEXT = "Esplanada";
 
@@ -107,6 +111,21 @@ export default function Page() {
 
   return (
     <>
+      <a href="https://wa.me/553184371888" target="_blank" rel="noopener">
+        <Fab
+          variant="extended"
+          sx={{
+            position: "fixed",
+            bottom: 88,
+            right: 16,
+          }}
+          color="success"
+        >
+          Dúvidas
+          <WhatsApp sx={{ ml: 1 }} />
+        </Fab>
+      </a>
+
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -242,6 +261,9 @@ export default function Page() {
             dates.map((date, index) => (
               <Box key={date}>
                 <Typography variant="h6">
+                  {dayjs(new Date(date)).isToday() && (
+                    <Chip color="warning" label="Hoje" sx={{ mr: 1, mb: 1 }} />
+                  )}
                   {dayjs(new Date(date)).format("D")}
                   {" de "}
                   {dayjs(new Date(date)).format("MMMM")}
