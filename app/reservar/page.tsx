@@ -77,7 +77,7 @@ const PLACES = [
   "Vicentina Aranha",
 ];
 
-const DEVICES = ["Carrinho 1", "Carrinho 2", "Display 1"];
+const DEVICES = ["Carrinho 1", "Carrinho 2", "Display 1", "Display 2"];
 
 const BOOKED = "Reservado";
 
