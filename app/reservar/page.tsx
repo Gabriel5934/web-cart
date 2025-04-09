@@ -162,31 +162,8 @@ export default function Page() {
     options: Array<string>;
     disabled?: boolean;
     value?: string;
-    checkForVicentina?: boolean;
   }) => {
-    const {
-      formik,
-      field,
-      label,
-      options,
-      disabled,
-      value,
-      checkForVicentina,
-    } = props;
-
-    const updatePlace = (newDevice: string) => {
-      if (!checkForVicentina) return;
-
-      if (formik.values.date) {
-        blockTimeStringOptions(formik.values.date, newDevice);
-      }
-
-      if (newDevice === "Carrinho 2") {
-        formik.setFieldValue("place", "Vicentina Aranha");
-      } else if (formik.values.place === "Vicentina Aranha") {
-        formik.setFieldValue("place", "");
-      }
-    };
+    const { formik, field, label, options, disabled, value } = props;
 
     return (
       <Autocomplete
@@ -204,7 +181,6 @@ export default function Page() {
         value={value ?? (formik.values[field] as string)}
         onChange={(_e, value) => {
           formik.setFieldValue(field, value);
-          updatePlace(value ?? "");
         }}
         disabled={disabled ?? false}
       />
@@ -321,7 +297,6 @@ export default function Page() {
                     label="Dispositivo"
                     formik={formik}
                     field="device"
-                    checkForVicentina
                   />
                   <div className="flex flex-col w-full gap-8 py-4">
                     <div className="flex gap-2 w-full">
@@ -352,7 +327,6 @@ export default function Page() {
                           formik={formik}
                           field="place"
                           value={formik.values.place}
-                          disabled={formik.values.device === "Carrinho 2"}
                         />
                       </div>
                     </div>
