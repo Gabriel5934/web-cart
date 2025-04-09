@@ -70,6 +70,7 @@ const OPENINGS = [
 
 const PLACES = [
   "Portaria 14 Bis",
+  "Sesc",
   "Feira Santa Clara",
   "Praça Romão Gomes",
   "Parque Ribeirão Vermelho",
