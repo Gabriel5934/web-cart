@@ -60,15 +60,13 @@ export function useBookings(showSucces: boolean, showError: boolean) {
   );
   const [lastBookings, setLastBookings] = useState<
     Record<string, Booking | undefined>
-  >({
-    "Carrinho 1": undefined,
-    "Carrinho 2": undefined,
-    Display: undefined,
-  });
+  >({});
 
   async function fetchData(backwardsRange: number = 0) {
     try {
       setLoading(true);
+
+      console.log(getCollectionName(window.location.hostname));
 
       const q = query(
         collection(db, getCollectionName(window.location.hostname)),

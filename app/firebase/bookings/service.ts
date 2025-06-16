@@ -44,21 +44,12 @@ export function groupByDates(bookings: Array<Booking>, backwardsRange: number) {
 
 export function getLastBookingForDevices(bookings: Array<Booking>) {
   const byDevice = _.groupBy(bookings, "device");
-  const toBeLastBookings: Record<string, Booking | undefined> = {
-    "Carrinho 1": undefined,
-    "Carrinho 2": undefined,
-    Display: undefined,
-  };
 
-  _.forEach(byDevice, (value, key) => {
-    const pastBookings = value.filter(
+  return _.mapValues(byDevice, (deviceBookings) => {
+    const pastBookings = deviceBookings.filter(
       (booking) => !booking.date.isAfter(dayjs())
     );
     const ordered = _.orderBy(pastBookings, "date.$d");
-    const last = _.last(ordered);
-
-    toBeLastBookings[key] = last;
+    return _.last(ordered);
   });
-
-  return toBeLastBookings;
 }

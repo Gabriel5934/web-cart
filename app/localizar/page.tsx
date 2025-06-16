@@ -8,6 +8,8 @@ import "react-loading-skeleton/dist/skeleton.css";
 export default function Page() {
   const { lastBookings, loading } = useBookings(false, true);
 
+  console.log(lastBookings);
+
   return (
     <>
       <Box

@@ -62,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Jardim Esplanada</title>
+        <title>Web Cart</title>
       </head>
       <body>
         <Snackbar
