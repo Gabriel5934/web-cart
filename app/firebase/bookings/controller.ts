@@ -20,16 +20,34 @@ import {
 } from "./service";
 import { Context } from "@/app/context";
 
-export const DEV_HOSTNAME =
-  "web-cart-git-develop-gabriel5934s-projects.vercel.app";
+export const DEV_HOSTNAME = [
+  "web-cart-git-develop-gabriel5934s-projects.vercel.app",
+  "web-cart-git-main-gabriel5934s-projects.vercel.app",
+];
 
-const getCollectionName = (hostname: string) => {
-  switch (hostname) {
-    case DEV_HOSTNAME:
-      return "bookingsDev";
-    default:
-      return "bookings";
+type DeploymentType = "aquarius" | "esplanada";
+type Environment = "dev" | "prod";
+
+const getCollectionName = (hostname: string): string => {
+  const isDevelopment = DEV_HOSTNAME.includes(hostname);
+  const deploy = process.env.NEXT_PUBLIC_DEPLOY as DeploymentType;
+
+  const collections: Record<DeploymentType, Record<Environment, string>> = {
+    aquarius: {
+      dev: "bookingsDevAquarius",
+      prod: "bookingsAquarius",
+    },
+    esplanada: {
+      dev: "bookingsDev",
+      prod: "bookings",
+    },
+  };
+
+  if (deploy && collections[deploy]) {
+    return collections[deploy][isDevelopment ? "dev" : "prod"];
   }
+
+  return "noDeployBookings";
 };
 
 export function useBookings(showSucces: boolean, showError: boolean) {

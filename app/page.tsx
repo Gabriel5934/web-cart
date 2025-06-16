@@ -25,7 +25,6 @@ import { useSearchParams } from "next/navigation";
 import { createRef, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
-import publicMinistry from "./assets/publicMinistry.jpg";
 import Image from "next/image";
 import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
@@ -35,6 +34,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useBookings } from "./firebase/bookings/controller";
 import { History, WhatsApp } from "@mui/icons-material";
 import Booking from "./components/Booking";
+import { getConstants } from "./consts";
 
 interface Booking {
   id: string;
@@ -52,8 +52,6 @@ dayjs.extend(duration);
 dayjs.extend(relativeTime);
 dayjs.extend(isToday);
 
-const SAFE_DELETE_TEXT = "Esplanada";
-
 export default function Page() {
   const searchParams = useSearchParams();
   const {
@@ -66,6 +64,7 @@ export default function Page() {
   } = useBookings(false, true);
   const showSnackbar = Boolean(searchParams.get("success"));
   const anchorRef = createRef<HTMLDivElement>();
+  const { SAFE_DELETE_TEXT, CONGREGATION, BACKGROUND_IMAGE } = getConstants();
 
   const [snackbarOpen, setSnackbarOpen] = useState(showSnackbar);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -180,7 +179,7 @@ export default function Page() {
           <AccordionDetails>
             <div className="flex flex-col gap-2">
               <Typography className="mb-2">
-                {'Digite "Esplanada" para deletar essa reserva'}
+                {`Digite "${SAFE_DELETE_TEXT}" para deletar essa reserva`}
               </Typography>
               <div>
                 <TextField
@@ -208,7 +207,7 @@ export default function Page() {
       <div className="inline-block overflow-hidden relative w-full">
         <Image
           className="pointer-events-none absolute w-full -z-10"
-          src={publicMinistry}
+          src={BACKGROUND_IMAGE}
           alt="Testemunho público"
           style={{
             filter: "brightness(25%)",
@@ -219,7 +218,7 @@ export default function Page() {
         <div className="px-8 py-8 flex flex-col gap-8">
           <div>
             <Typography variant="h6" color="white">
-              Jardim Esplanada
+              {CONGREGATION}
             </Typography>
             <Typography variant="h5" color="white">
               Testemunho Público

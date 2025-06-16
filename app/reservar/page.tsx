@@ -32,6 +32,7 @@ import "dayjs/locale/pt-br";
 import { DEV_HOSTNAME, useBookings } from "../firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { getConstants } from "../consts";
 
 interface Inputs {
   device: string;
@@ -68,21 +69,10 @@ const OPENINGS = [
   "19:00 - 21:00",
 ];
 
-const PLACES = [
-  "Portaria 14 Bis",
-  "Sesc",
-  "Feira Santa Clara",
-  "Praça Romão Gomes",
-  "Parque Ribeirão Vermelho",
-  "Feira do Urbanova",
-  "Vicentina Aranha",
-];
-
-const DEVICES = ["Carrinho 1", "Carrinho 2", "Display"];
-
 const BOOKED = "Reservado";
 
 export default function Page() {
+  const { PLACES, DEVICES } = getConstants();
   const { bookings, loading } = useBookings(false, true);
   const { addData } = useBookings(false, true);
 
