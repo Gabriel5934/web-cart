@@ -220,7 +220,7 @@ export default function Page() {
   const shouldDisablePast = () => {
     const hostName = window.location.hostname;
 
-    return hostName === DEV_HOSTNAME ? false : true;
+    return DEV_HOSTNAME.includes(hostName) ? false : true;
   };
 
   return (
