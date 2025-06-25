@@ -66,8 +66,6 @@ export function useBookings(showSucces: boolean, showError: boolean) {
     try {
       setLoading(true);
 
-      console.log(getCollectionName(window.location.hostname));
-
       const q = query(
         collection(db, getCollectionName(window.location.hostname)),
         orderBy("date")
