@@ -7,7 +7,7 @@ export const getConstants = () => {
     CONGREGATION: "Aquarius",
     BACKGROUND_IMAGE: aquariusBG,
     PLACES: ["TODO AQUARIUS"],
-    DEVICES: ["TODO AQUARIUS"],
+    DEVICES: ["Carrinho 2", "Display 2"],
   };
   const esplanada = {
     SAFE_DELETE_TEXT: "Esplanada",
@@ -22,7 +22,7 @@ export const getConstants = () => {
       "Feira do Urbanova",
       "Vicentina Aranha",
     ],
-    DEVICES: ["Carrinho 1", "Carrinho 2", "Display"],
+    DEVICES: ["Carrinho 1", "Display 1"],
   };
 
   const deploy = process.env.NEXT_PUBLIC_DEPLOY;
