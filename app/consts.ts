@@ -36,7 +36,7 @@ export const getConstants = () => {
       CONGREGATION: "DEPLOY_NOT_SET",
       BACKGROUND_IMAGE: "#",
       PLACES: [],
-      DEVICES: [],
+      DEVICES: new Array<string>(),
     };
   }
 };

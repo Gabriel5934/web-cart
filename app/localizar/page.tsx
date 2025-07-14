@@ -4,9 +4,15 @@ import { Alert, Box, Paper, Stack, Typography } from "@mui/material";
 import { useBookings } from "../firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { getConstants } from "../consts";
 
 export default function Page() {
   const { lastBookings, loading } = useBookings(false, true);
+  const { DEVICES } = getConstants();
+
+  const devices = Object.keys(lastBookings).filter((key) =>
+    DEVICES.includes(key)
+  );
 
   return (
     <>
@@ -28,7 +34,7 @@ export default function Page() {
                 'Para informar que você devolveu o carrinho ou display no salão, clique na sua reserva na tela de Início e depois em "Devolver"'
               }
             </Alert>
-            {Object.keys(lastBookings).map((key: keyof typeof lastBookings) => (
+            {devices.map((key) => (
               <Paper
                 sx={{
                   bgcolor: "primary.main",
