@@ -18,8 +18,6 @@ export const getConstants = () => {
       "Sesc",
       "Feira Santa Clara",
       "Praça Romão Gomes",
-      "Parque Ribeirão Vermelho",
-      "Feira do Urbanova",
       "Vicentina Aranha",
     ],
     DEVICES: ["Carrinho 1", "Display 1"],
