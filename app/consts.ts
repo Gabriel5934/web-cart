@@ -8,19 +8,23 @@ export const getConstants = () => {
     BACKGROUND_IMAGE: aquariusBG,
     PLACES: ["TODO AQUARIUS"],
     DEVICES: ["Carrinho 2", "Display 2"],
+    WHATSAPP: "553184371888",
   };
   const esplanada = {
     SAFE_DELETE_TEXT: "Esplanada",
     CONGREGATION: "Jardim Esplanada",
     BACKGROUND_IMAGE: esplanadaBG,
     PLACES: [
-      "Portaria 14 Bis",
+      "Santos Dumont - Portaria 14 Bis",
+      "Santos Dumont - Portaria Ademar de Barros",
       "Sesc",
-      "Feira Santa Clara",
+      "Feira na Santa Clara (Sexta-Feira)",
       "Praça Romão Gomes",
       "Vicentina Aranha",
+      "Hospital Santos Dumont",
     ],
     DEVICES: ["Carrinho 1", "Display 1"],
+    WHATSAPP: "5512996456249",
   };
 
   const deploy = process.env.NEXT_PUBLIC_DEPLOY;
@@ -35,6 +39,7 @@ export const getConstants = () => {
       BACKGROUND_IMAGE: "#",
       PLACES: [],
       DEVICES: new Array<string>(),
+      WHATSAPP: "",
     };
   }
 };

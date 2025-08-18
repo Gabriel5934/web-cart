@@ -64,7 +64,8 @@ export default function Page() {
   } = useBookings(false, true);
   const showSnackbar = Boolean(searchParams.get("success"));
   const anchorRef = createRef<HTMLDivElement>();
-  const { SAFE_DELETE_TEXT, CONGREGATION, BACKGROUND_IMAGE } = getConstants();
+  const { SAFE_DELETE_TEXT, CONGREGATION, BACKGROUND_IMAGE, WHATSAPP } =
+    getConstants();
 
   const [snackbarOpen, setSnackbarOpen] = useState(showSnackbar);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -110,7 +111,7 @@ export default function Page() {
 
   return (
     <>
-      <a href="https://wa.me/553184371888" target="_blank" rel="noopener">
+      <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener">
         <Fab
           variant="extended"
           sx={{
