@@ -1,6 +1,12 @@
 "use client";
 
-import { Paper, BottomNavigation, BottomNavigationAction } from "@mui/material";
+import {
+  Paper,
+  BottomNavigation,
+  BottomNavigationAction,
+  Backdrop,
+  CircularProgress,
+} from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
@@ -27,16 +33,22 @@ export default function WithLayout({
     router.push(routes[tab]);
   };
 
-  if (!context.auth.user) {
-    router.push("/");
-  }
-
   useEffect(() => {
     setTab(pathIndex);
   }, [pathIndex]);
 
+  useEffect(() => {
+    if (!context.auth.user) {
+      router.push("/");
+    }
+  }, [context.auth.user, router]);
+
   if (!context.auth.user) {
-    return "Carregando";
+    return (
+      <Backdrop onClick={() => {}} open>
+        <CircularProgress />
+      </Backdrop>
+    );
   } else {
     return (
       <>
