@@ -11,7 +11,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useContext, useState } from "react";
 import { Formik, FormikProps } from "formik";
 import { object, string } from "yup";
 import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
@@ -32,6 +32,8 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { getConstants } from "../../consts";
 import toast from "react-hot-toast";
+import { Context } from "@/app/context";
+import { BookingDoc } from "@/app/firebase/bookings/types";
 
 interface Inputs {
   device: string;
@@ -40,16 +42,6 @@ interface Inputs {
   place: string;
   date: Dayjs | null;
   timeString: string;
-}
-
-interface BookingDoc {
-  id: string;
-  device: string;
-  name: string;
-  partner: string;
-  place: string;
-  date: Timestamp;
-  returned: boolean;
 }
 
 dayjs.locale("pt-br");
@@ -74,6 +66,7 @@ export default function Page() {
   const { PLACES, DEVICES } = getConstants();
   const { bookings, loading } = useBookings(false, true);
   const { addData } = useBookings(false, true);
+  const context = useContext(Context);
 
   const router = useRouter();
   const [showBackdrop, setShowBackdrop] = useState(false);
@@ -86,6 +79,7 @@ export default function Page() {
       ...values,
       date: Timestamp.fromDate(values.date.toDate()),
       returned: false,
+      owner: context.auth.user?.username || "",
     };
 
     try {
@@ -115,8 +109,9 @@ export default function Page() {
     field: keyof Inputs;
     formik: FormikProps<Inputs>;
     pipe?: (value: string) => string;
+    disabled?: boolean;
   }) => {
-    const { label, field, formik, pipe } = props;
+    const { label, field, formik, pipe, disabled } = props;
 
     const onChange = (
       e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -138,6 +133,7 @@ export default function Page() {
         onChange={onChange}
         error={Boolean(formik.errors[field])}
         helperText={formik.errors[field]}
+        disabled={disabled}
       />
     );
   };
@@ -244,7 +240,7 @@ export default function Page() {
           <Formik<Inputs>
             initialValues={{
               device: "",
-              name: "",
+              name: context.auth.user?.displayName ?? "",
               partner: "",
               place: "",
               date: null,
@@ -279,6 +275,7 @@ export default function Page() {
                           label="Seu Nome"
                           field="name"
                           formik={formik}
+                          disabled
                         />
                         <CustomTextField
                           label="Nome do companheiro(a)"

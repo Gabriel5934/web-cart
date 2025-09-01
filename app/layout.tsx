@@ -8,8 +8,8 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { Suspense, useState } from "react";
 import { Context } from "./context";
-import { User } from "firebase/auth";
 import { Toaster } from "react-hot-toast";
+import { User } from "./firebase/users/types";
 
 export default function RootLayout({
   children,

@@ -9,6 +9,7 @@ export interface BookingDoc {
   place: string;
   date: Timestamp;
   returned: boolean;
+  owner: string;
 }
 
 export interface Booking {
@@ -19,4 +20,5 @@ export interface Booking {
   place: string;
   date: Dayjs;
   returned: boolean;
+  owner: string;
 }

@@ -4,31 +4,32 @@ import { Button, Stack, TextField, Typography } from "@mui/material";
 import { useFormik } from "formik";
 import { useRouter } from "next/navigation";
 import { object, string } from "yup";
-import { useLoginWithEmailAndPassword } from "./firebase/auth/controller";
+import { useUsers } from "./firebase/users/controller";
 
 export default function Page() {
   const router = useRouter();
 
-  const { signIn } = useLoginWithEmailAndPassword();
+  const { signIn } = useUsers();
 
   const requiredMessage = "Campo Obrigatório";
 
   const schema = object({
-    email: string().required(requiredMessage),
-    password: string().min(4).required(requiredMessage),
+    username: string().required(requiredMessage),
+    code: string().min(4).required(requiredMessage),
   });
 
   const formik = useFormik({
     initialValues: {
-      email: "",
-      password: "",
+      username: "",
+      code: "",
     },
     validationSchema: schema,
     onSubmit: (values) => {
-      const fixedEmail = `${values.email}@webcart.com`;
-      const fixedPassword = `${values.password}00`;
+      const normalizedUsername = values.username
+        .toLowerCase()
+        .replaceAll(" ", "");
 
-      signIn(fixedEmail, fixedPassword).then(() => {
+      signIn(normalizedUsername, values.code).then(() => {
         router.push("/inicio");
       });
     },
@@ -48,22 +49,18 @@ export default function Page() {
             label="Usuário"
             variant="outlined"
             fullWidth
-            value={formik.values.email}
+            value={formik.values.username}
             onChange={formik.handleChange}
-            name="email"
-            error={Boolean(formik.errors.email)}
-            helperText={formik.errors.email}
+            name="username"
           />
           <TextField
             label="Senha"
             variant="outlined"
             type="password"
             fullWidth
-            value={formik.values.password}
+            value={formik.values.code}
             onChange={formik.handleChange}
-            name="password"
-            error={Boolean(formik.errors.password)}
-            helperText={formik.errors.password}
+            name="code"
           />
           <Button variant="contained" color="primary" fullWidth type="submit">
             Entrar

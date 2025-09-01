@@ -1,5 +1,5 @@
-import { User } from "firebase/auth";
 import { createContext } from "react";
+import { User } from "./firebase/users/types";
 
 interface IContext {
   auth: { setUser: (user: User | null) => void; user: User | null };
