@@ -4,7 +4,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
   Backdrop,
   Box,
   Button,
@@ -13,7 +12,6 @@ import {
   Fab,
   Fade,
   Modal,
-  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -21,7 +19,6 @@ import {
 import Link from "next/link";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
-import { useSearchParams } from "next/navigation";
 import { createRef, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
@@ -53,7 +50,6 @@ dayjs.extend(relativeTime);
 dayjs.extend(isToday);
 
 export default function Page() {
-  const searchParams = useSearchParams();
   const {
     dates,
     bookingsByDate,
@@ -62,19 +58,15 @@ export default function Page() {
     deleteData,
     toggleReturned,
   } = useBookings(false, true);
-  const showSnackbar = Boolean(searchParams.get("success"));
   const anchorRef = createRef<HTMLDivElement>();
   const { SAFE_DELETE_TEXT, CONGREGATION, BACKGROUND_IMAGE, WHATSAPP } =
     getConstants();
 
-  const [snackbarOpen, setSnackbarOpen] = useState(showSnackbar);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [returnModal, setReturnModal] = useState(false);
   const [drawerBooking, setDrawerBooking] = useState<Booking>();
   const [safeDeleteText, setSafeDeleteText] = useState("");
   const [historyShown, setHistoryShown] = useState(false);
-
-  const closeSnackbar = () => setSnackbarOpen(false);
 
   const refreshWithHistory = () => refresh(historyShown ? 30 : 0);
 
@@ -125,22 +117,6 @@ export default function Page() {
           <WhatsApp sx={{ ml: 1 }} />
         </Fab>
       </a>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        onClose={closeSnackbar}
-      >
-        <Alert
-          severity="success"
-          variant="filled"
-          sx={{ width: "100%" }}
-          onClose={closeSnackbar}
-        >
-          Reserva feita!
-        </Alert>
-      </Snackbar>
 
       <Drawer
         open={drawerOpen}

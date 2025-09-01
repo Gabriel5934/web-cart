@@ -10,7 +10,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import _ from "lodash";
 import { Booking, BookingDoc } from "./types";
 import {
@@ -18,7 +18,7 @@ import {
   getLastBookingForDevices,
   groupByDates,
 } from "./service";
-import { Context } from "@/app/context";
+import toast from "react-hot-toast";
 
 export const DEV_HOSTNAME = [
   "web-cart-git-develop-gabriel5934s-projects.vercel.app",
@@ -51,7 +51,6 @@ const getCollectionName = (hostname: string): string => {
 };
 
 export function useBookings(showSucces: boolean, showError: boolean) {
-  const context = useContext(Context);
   const [bookings, setBookings] = useState<Array<Booking>>([]);
   const [loading, setLoading] = useState(true);
   const [dates, setDates] = useState<Array<keyof _.Dictionary<Booking[]>>>([]);
@@ -61,6 +60,7 @@ export function useBookings(showSucces: boolean, showError: boolean) {
   const [lastBookings, setLastBookings] = useState<
     Record<string, Booking | undefined>
   >({});
+  const [newBooking, setNewBooking] = useState<string | null>(null);
 
   async function fetchData(backwardsRange: number = 0) {
     try {
@@ -77,11 +77,7 @@ export function useBookings(showSucces: boolean, showError: boolean) {
       const toBeLastBookings = getLastBookingForDevices(bookings);
 
       if (showSucces) {
-        context.openSnackBar({
-          severity: "success",
-          message: `${bookings.length} reservas encontradas`,
-          error: "",
-        });
+        toast.success(`${bookings.length} reservas encontradas`);
       }
 
       setBookings(bookings);
@@ -92,23 +88,26 @@ export function useBookings(showSucces: boolean, showError: boolean) {
       console.log(error);
 
       if (showError) {
-        context.openSnackBar({
-          severity: "error",
-          message: "Algo deu errado",
-          error: `${error}`,
-        });
+        toast.error("Algo deu errado");
       }
     } finally {
       setLoading(false);
     }
   }
 
-  function addData(booking: Omit<BookingDoc, "id">) {
-    const docRef = addDoc(
-      collection(db, getCollectionName(window.location.hostname)),
-      booking
-    );
-    return docRef;
+  async function addData(booking: Omit<BookingDoc, "id">) {
+    try {
+      const docRef = await addDoc(
+        collection(db, getCollectionName(window.location.hostname)),
+        booking
+      );
+
+      setNewBooking(docRef.id);
+
+      toast.success("Reserva feita com sucesso");
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   function deleteData(id: string) {
@@ -137,6 +136,7 @@ export function useBookings(showSucces: boolean, showError: boolean) {
     bookingsByDate,
     dates,
     lastBookings,
+    newBooking,
     refresh: fetchData,
     addData,
     deleteData,

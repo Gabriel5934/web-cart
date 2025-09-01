@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Alert,
   Autocomplete,
   Backdrop,
   Box,
@@ -9,7 +8,6 @@ import {
   CircularProgress,
   FormControl,
   FormHelperText,
-  Snackbar,
   TextField,
   Typography,
 } from "@mui/material";
@@ -33,6 +31,7 @@ import { DEV_HOSTNAME, useBookings } from "../../firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { getConstants } from "../../consts";
+import toast from "react-hot-toast";
 
 interface Inputs {
   device: string;
@@ -78,10 +77,7 @@ export default function Page() {
 
   const router = useRouter();
   const [showBackdrop, setShowBackdrop] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [timeStringOptions, setTimeStringOptions] = useState<Array<string>>([]);
-
-  const closeSnackbar = () => setSnackbarOpen(false);
 
   const onSubmit = async (values: Inputs) => {
     if (!values.date) return;
@@ -94,12 +90,12 @@ export default function Page() {
 
     try {
       setShowBackdrop(true);
-      const docRef = await addData(formatted);
-      router.push(`/?success=true&id=${docRef.id}`);
+      await addData(formatted);
+      router.push("/inicio");
     } catch (e) {
       setShowBackdrop(false);
       console.error("Error adding document: ", e);
-      setSnackbarOpen(true);
+      toast.error("Algo deu errado, tente novamente");
     }
   };
 
@@ -232,22 +228,6 @@ export default function Page() {
       >
         <CircularProgress />
       </Backdrop>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        onClose={closeSnackbar}
-      >
-        <Alert
-          severity="error"
-          variant="filled"
-          sx={{ width: "100%" }}
-          onClose={closeSnackbar}
-        >
-          Algo deu errado, tente novamente
-        </Alert>
-      </Snackbar>
 
       <Box
         sx={(theme) => ({ bgcolor: theme.palette.primary.main })}
