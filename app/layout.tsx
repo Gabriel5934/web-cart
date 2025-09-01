@@ -6,45 +6,23 @@ import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-import {
-  Paper,
-  BottomNavigation,
-  BottomNavigationAction,
-  Snackbar,
-  Alert,
-  Button,
-  Stack,
-  Typography,
-} from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import HomeIcon from "@mui/icons-material/Home";
-import { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
+import { Snackbar, Alert, Button, Stack, Typography } from "@mui/material";
+import { Suspense, useState } from "react";
 import { Context, SnackbarProps } from "./context";
+import { User } from "firebase/auth";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const routes = ["/", "/localizar", "/reservar"];
-  const router = useRouter();
-  const pathname = usePathname();
-  const pathIndex = routes.indexOf(pathname);
-  const [tab, setTab] = useState(pathIndex);
   const [showSnackBar, setShowSnackBar] = useState(false);
   const [snackBarProps, setSnackBarProps] = useState<SnackbarProps>({
     severity: "info",
     message: "",
     error: "",
   });
-
-  const changeTab = (_event: unknown, tab: number) => {
-    setTab(tab);
-    router.push(routes[tab]);
-  };
+  const [user, setUser] = useState<User | null>(null);
 
   const closeSnackBar = () => {
     setShowSnackBar(false);
@@ -54,10 +32,6 @@ export default function RootLayout({
     setSnackBarProps(props);
     setShowSnackBar(true);
   };
-
-  useEffect(() => {
-    setTab(pathIndex);
-  }, [pathIndex]);
 
   return (
     <html lang="en">
@@ -95,24 +69,10 @@ export default function RootLayout({
           </Alert>
         </Snackbar>
         <div className="mb-16">
-          <Context.Provider value={{ openSnackBar }}>
+          <Context.Provider value={{ openSnackBar, auth: { user, setUser } }}>
             <Suspense>{children}</Suspense>
           </Context.Provider>
         </div>
-        <Paper
-          sx={{ position: "fixed", bottom: 0, left: 0, right: 0 }}
-          elevation={3}
-          className="z-50"
-        >
-          <BottomNavigation showLabels value={tab} onChange={changeTab}>
-            <BottomNavigationAction label="Início" icon={<HomeIcon />} />
-            <BottomNavigationAction
-              label="Localizar"
-              icon={<LocationOnIcon />}
-            />
-            <BottomNavigationAction label="Reservar" icon={<AddIcon />} />
-          </BottomNavigation>
-        </Paper>
       </body>
     </html>
   );
