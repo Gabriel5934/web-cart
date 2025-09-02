@@ -1,5 +1,5 @@
 import { collection, getDocs, query } from "firebase/firestore";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { db } from "../firebase";
 import { UserDoc } from "./types";
 import { Context } from "@/app/context";
@@ -8,6 +8,30 @@ import toast from "react-hot-toast";
 export const useUsers = () => {
   const context = useContext(Context);
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<Array<UserDoc>>([]);
+
+  const normalizeString = (str: string) => {
+    return str.replaceAll(" ", "").toLowerCase();
+  };
+
+  const getUsers = async () => {
+    try {
+      setLoading(true);
+      const q = query(collection(db, "users"));
+      const querySnapshot = await getDocs(q);
+      const users = querySnapshot.docs.map((doc) => ({
+        ...(doc.data() as UserDoc),
+      })) as UserDoc[];
+      setUsers(users);
+      return users;
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error("Error fetching users");
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const signIn = async (username: string, code: string) => {
     try {
@@ -19,8 +43,11 @@ export const useUsers = () => {
       const users = querySnapshot.docs.map((doc) => ({
         ...(doc.data() as UserDoc),
       })) as UserDoc[];
+
       const user = users.find(
-        (user) => user.username === username && user.code === code
+        (user) =>
+          normalizeString(user.username) === normalizeString(username) &&
+          `${user.code}` === `${code}`
       );
 
       if (!user)
@@ -39,5 +66,9 @@ export const useUsers = () => {
     }
   };
 
-  return { signIn, loading };
+  useEffect(() => {
+    getUsers();
+  }, []);
+
+  return { signIn, loading, getUsers, users };
 };
