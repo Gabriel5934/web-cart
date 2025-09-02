@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import { Context } from "../context";
+import { getConstants } from "../consts";
 
 export default function WithLayout({
   children,
@@ -27,6 +28,7 @@ export default function WithLayout({
   const pathIndex = routes.indexOf(pathname);
   const [tab, setTab] = useState(pathIndex);
   const context = useContext(Context);
+  const { AUTH } = getConstants();
 
   const changeTab = (_event: unknown, tab: number) => {
     setTab(tab);
@@ -38,12 +40,12 @@ export default function WithLayout({
   }, [pathIndex]);
 
   useEffect(() => {
-    if (!context.auth.user) {
+    if (!context.auth.user && AUTH) {
       router.push("/");
     }
-  }, [context.auth.user, router]);
+  }, [context.auth.user, router, AUTH]);
 
-  if (!context.auth.user) {
+  if (!context.auth.user && AUTH) {
     return (
       <Backdrop onClick={() => {}} open>
         <CircularProgress />

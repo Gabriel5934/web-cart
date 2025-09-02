@@ -9,6 +9,7 @@ export const getConstants = () => {
     PLACES: ["TODO AQUARIUS"],
     DEVICES: ["Carrinho 2", "Display 2"],
     WHATSAPP: "553184371888",
+    AUTH: false,
   };
   const esplanada = {
     SAFE_DELETE_TEXT: "Esplanada",
@@ -25,6 +26,7 @@ export const getConstants = () => {
     ],
     DEVICES: ["Carrinho 1", "Display 1"],
     WHATSAPP: "5512996456249",
+    AUTH: true,
   };
 
   const deploy = process.env.NEXT_PUBLIC_DEPLOY;
@@ -40,6 +42,7 @@ export const getConstants = () => {
       PLACES: [],
       DEVICES: new Array<string>(),
       WHATSAPP: "",
+      AUTH: false,
     };
   }
 };

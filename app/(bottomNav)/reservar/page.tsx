@@ -275,7 +275,7 @@ export default function Page() {
                           label="Seu Nome"
                           field="name"
                           formik={formik}
-                          disabled
+                          disabled={Boolean(context.auth.user)}
                         />
                         <CustomTextField
                           label="Nome do companheiro(a)"

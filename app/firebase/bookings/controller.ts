@@ -62,7 +62,10 @@ export function useBookings(showSucces: boolean, showError: boolean) {
   >({});
   const [newBooking, setNewBooking] = useState<string | null>(null);
 
-  async function fetchData(backwardsRange: number = 0) {
+  async function fetchData(options: {
+    backwardsRange?: number;
+    user?: string;
+  }) {
     try {
       setLoading(true);
 
@@ -73,14 +76,19 @@ export function useBookings(showSucces: boolean, showError: boolean) {
       const querySnapshot = await getDocs(q);
 
       const bookings = formatBookings(querySnapshot);
-      const { grouped, dates } = groupByDates(bookings, backwardsRange);
-      const toBeLastBookings = getLastBookingForDevices(bookings);
-
+      const filteredByUser = options.user
+        ? bookings.filter((booking) => booking.owner === options.user)
+        : bookings;
+      const { grouped, dates } = groupByDates(
+        filteredByUser,
+        options.backwardsRange ?? 0
+      );
+      const toBeLastBookings = getLastBookingForDevices(filteredByUser);
       if (showSucces) {
-        toast.success(`${bookings.length} reservas encontradas`);
+        toast.success(`${filteredByUser.length} reservas encontradas`);
       }
 
-      setBookings(bookings);
+      setBookings(filteredByUser);
       setBookingsByDate(grouped);
       setDates(dates);
       setLastBookings(toBeLastBookings);
@@ -127,7 +135,7 @@ export function useBookings(showSucces: boolean, showError: boolean) {
   }
 
   useEffect(() => {
-    fetchData();
+    fetchData({});
   }, []);
 
   return {

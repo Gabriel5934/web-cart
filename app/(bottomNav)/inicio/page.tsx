@@ -11,15 +11,17 @@ import {
   Drawer,
   Fab,
   Fade,
+  FormControlLabel,
   Modal,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
 import Link from "next/link";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
-import { createRef, useEffect, useState } from "react";
+import { createRef, useContext, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
 import Image from "next/image";
@@ -32,6 +34,7 @@ import { useBookings } from "../../firebase/bookings/controller";
 import { History, WhatsApp } from "@mui/icons-material";
 import Booking from "../../components/Booking";
 import { getConstants } from "../../consts";
+import { Context } from "@/app/context";
 
 interface Booking {
   id: string;
@@ -49,6 +52,11 @@ dayjs.extend(duration);
 dayjs.extend(relativeTime);
 dayjs.extend(isToday);
 
+interface RefreshOptions {
+  backwardsRange: number;
+  user: string | undefined;
+}
+
 export default function Page() {
   const {
     dates,
@@ -59,27 +67,48 @@ export default function Page() {
     toggleReturned,
   } = useBookings(false, true);
   const anchorRef = createRef<HTMLDivElement>();
-  const { SAFE_DELETE_TEXT, CONGREGATION, BACKGROUND_IMAGE, WHATSAPP } =
+  const { SAFE_DELETE_TEXT, CONGREGATION, BACKGROUND_IMAGE, WHATSAPP, AUTH } =
     getConstants();
+  const context = useContext(Context);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [returnModal, setReturnModal] = useState(false);
   const [drawerBooking, setDrawerBooking] = useState<Booking>();
   const [safeDeleteText, setSafeDeleteText] = useState("");
-  const [historyShown, setHistoryShown] = useState(false);
+  const [options, setOptions] = useState<RefreshOptions>({
+    backwardsRange: 0,
+    user: undefined,
+  });
 
-  const refreshWithHistory = () => refresh(historyShown ? 30 : 0);
+  const refreshWithOptions = () => {
+    refresh(options);
+  };
 
   const toggleHistory = () => {
-    setHistoryShown(!historyShown);
-    refresh(historyShown ? 0 : 30);
+    const newOptions = {
+      ...options,
+      backwardsRange: options.backwardsRange === 30 ? 0 : 30,
+    };
+
+    setOptions(newOptions);
+    refresh(newOptions);
+  };
+
+  const toggleOnlyMine = (value: boolean) => {
+    const newOptions = {
+      ...options,
+      user: value ? context.auth.user?.username : undefined,
+    };
+
+    setOptions(newOptions);
+    refresh(newOptions);
   };
 
   const deleteBooking = async (id: string) => {
     await deleteData(id);
 
     setDrawerOpen(false);
-    refreshWithHistory();
+    refreshWithOptions();
   };
 
   const toggleReturn = async (id: string) => {
@@ -88,7 +117,7 @@ export default function Page() {
     await toggleReturned(id);
 
     setReturnModal(false);
-    refreshWithHistory();
+    refreshWithOptions();
   };
 
   useEffect(() => {
@@ -225,15 +254,28 @@ export default function Page() {
               startIcon={<History />}
               onClick={toggleHistory}
             >
-              ver {historyShown ? "menos" : "mais"}
+              ver {options.backwardsRange === 30 ? "menos" : "mais"}
             </Button>
           </div>
+          {AUTH && (
+            <div>
+              <FormControlLabel
+                control={
+                  <Switch
+                    onChange={(e) => toggleOnlyMine(e.target.checked)}
+                    checked={options.user === context.auth.user?.username}
+                  />
+                }
+                label="Somente minhas reservas"
+              />
+            </div>
+          )}
         </Stack>
 
         <Stack spacing={2}>
-          {loading ? (
-            <Skeleton height={100} width={"100%"} count={5} />
-          ) : (
+          {loading && <Skeleton height={100} width={"100%"} count={5} />}
+          {!loading &&
+            dates.length > 0 &&
             dates.map((date, index) => (
               <Box key={date}>
                 <Typography variant="h6">
@@ -258,7 +300,13 @@ export default function Page() {
                   />
                 ))}
               </Box>
-            ))
+            ))}
+          {dates.length === 0 && !loading && (
+            <Stack alignItems="center">
+              <Typography variant="overline" color="gray">
+                Nenhuma reserva encontrada
+              </Typography>
+            </Stack>
           )}
         </Stack>
       </Box>
