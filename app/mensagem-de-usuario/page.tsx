@@ -25,7 +25,7 @@ export default function Page() {
   const copyToClipboard = () => {
     if (selectedUser) {
       navigator.clipboard.writeText(
-        `Seu Login e Senha para reserva de carrinho e display\n\nLogin: ${selectedUser.username}\nSenha: ${selectedUser.code}`
+        `Seu Login e Senha para reserva de carrinho e display\n\nLogin: ${selectedUser.user}\nSenha: ${selectedUser.pinCode}`
       );
     }
   };
@@ -62,8 +62,8 @@ export default function Page() {
           Seu Login e Senha para reserva de carrinho e display
         </Typography>
         <br />
-        <Typography>Login: {selectedUser?.username}</Typography>
-        <Typography>Senha: {selectedUser?.code}</Typography>
+        <Typography>Login: {selectedUser?.user}</Typography>
+        <Typography>Senha: {selectedUser?.pinCode}</Typography>
       </Box>
       <Button
         fullWidth

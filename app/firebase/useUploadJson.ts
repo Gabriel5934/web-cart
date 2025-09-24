@@ -12,7 +12,7 @@ export default function useUploadJson() {
       const newUsers = users.filter(
         (newUser) =>
           !existingUsers.some(
-            (existingUser) => existingUser.username === newUser.username
+            (existingUser) => existingUser.user === newUser.user
           )
       );
 

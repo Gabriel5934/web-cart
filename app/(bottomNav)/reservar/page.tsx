@@ -79,7 +79,7 @@ export default function Page() {
       ...values,
       date: Timestamp.fromDate(values.date.toDate()),
       returned: false,
-      owner: context.auth.user?.username || "",
+      owner: context.auth.user?.user || "",
     };
 
     try {

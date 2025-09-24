@@ -97,7 +97,7 @@ export default function Page() {
   const toggleOnlyMine = (value: boolean) => {
     const newOptions = {
       ...options,
-      user: value ? context.auth.user?.username : undefined,
+      user: value ? context.auth.user?.user : undefined,
     };
 
     setOptions(newOptions);
@@ -263,7 +263,7 @@ export default function Page() {
                 control={
                   <Switch
                     onChange={(e) => toggleOnlyMine(e.target.checked)}
-                    checked={options.user === context.auth.user?.username}
+                    checked={options.user === context.auth.user?.user}
                   />
                 }
                 label="Somente minhas reservas"

@@ -11,7 +11,11 @@ export const useUsers = () => {
   const [users, setUsers] = useState<Array<UserDoc>>([]);
 
   const normalizeString = (str: string) => {
-    return str.replaceAll(" ", "").toLowerCase();
+    return str
+      .replaceAll(" ", "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
   };
 
   const getUsers = async () => {
@@ -46,8 +50,8 @@ export const useUsers = () => {
 
       const user = users.find(
         (user) =>
-          normalizeString(user.username) === normalizeString(username) &&
-          `${user.code}` === `${code}`
+          normalizeString(user.user) === normalizeString(username) &&
+          `${user.pinCode}` === `${code}`
       );
 
       if (!user)
