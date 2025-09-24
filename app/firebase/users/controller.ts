@@ -1,7 +1,7 @@
 import { collection, getDocs, query } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
 import { db } from "../firebase";
-import { UserDoc } from "./types";
+import { User, UserDoc } from "./types";
 import { Context } from "@/app/context";
 import toast from "react-hot-toast";
 
@@ -38,6 +38,8 @@ export const useUsers = () => {
   };
 
   const signIn = async (username: string, code: string) => {
+    let user: User | null = null;
+
     try {
       setLoading(true);
 
@@ -48,14 +50,12 @@ export const useUsers = () => {
         ...(doc.data() as UserDoc),
       })) as UserDoc[];
 
-      const user = users.find(
-        (user) =>
-          normalizeString(user.user) === normalizeString(username) &&
-          `${user.pinCode}` === `${code}`
-      );
-
-      if (!user)
-        throw new Error("Usuário ou senha incorretos", { cause: "AUTH_ERROR" });
+      user =
+        users.find(
+          (user) =>
+            normalizeString(user.user) === normalizeString(username) &&
+            `${user.pinCode}` === `${code}`
+        ) ?? null;
 
       context.auth.setUser(user);
     } catch (error) {
@@ -67,6 +67,11 @@ export const useUsers = () => {
       }
     } finally {
       setLoading(false);
+    }
+
+    if (!user) {
+      toast.error("Usuário ou senha incorretos");
+      throw new Error("Usuário ou senha incorretos", { cause: "AUTH_ERROR" });
     }
   };
 

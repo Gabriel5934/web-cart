@@ -1,5 +1,4 @@
 export interface UserDoc {
-  id: string;
   fullName: string;
   firstName: string;
   lastName: string;
@@ -9,7 +8,6 @@ export interface UserDoc {
 }
 
 export interface User {
-  id: string;
   fullName: string;
   firstName: string;
   lastName: string;
