@@ -11,14 +11,14 @@ import { useUsers } from "../firebase/users/controller";
 import { useState } from "react";
 import { User } from "../firebase/users/types";
 export default function Page() {
-  const { users } = useUsers();
+  const { data } = useUsers();
 
-  const autocompleteOptions = users.map((user) => user.displayName);
+  const autocompleteOptions = data.map((user) => user.displayName);
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const onChangeUser = (_: unknown, value: string | null) => {
-    const user = users.find((user) => user.displayName === value) || null;
+    const user = data.find((user) => user.displayName === value) || null;
     setSelectedUser(user);
   };
 

@@ -2,7 +2,6 @@ import { Dayjs } from "dayjs";
 import { Timestamp } from "firebase/firestore";
 
 export interface BookingDoc {
-  id: string;
   device: string;
   name: string;
   partner: string;
@@ -13,7 +12,6 @@ export interface BookingDoc {
 }
 
 export interface Booking {
-  id: string;
   device: string;
   name: string;
   partner: string;

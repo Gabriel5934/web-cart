@@ -27,13 +27,10 @@ import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br";
-import {
-  DEV_HOSTNAME,
-  useBookings,
-} from "../../../firebase/bookings/controller";
+import { DEV_HOSTNAME, useBookings } from "@/app/firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { getConstants } from "../../../consts";
+import { getConstants } from "@/app/consts";
 import toast from "react-hot-toast";
 import { Context } from "@/app/context";
 import { BookingDoc } from "@/app/firebase/bookings/types";

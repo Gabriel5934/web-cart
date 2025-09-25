@@ -15,7 +15,6 @@ export function formatBookings(
     const data = doc.data() as BookingDoc;
     const formatted: Booking = {
       ...data,
-      id: doc.id,
       date: dayjs(data.date.toDate()),
     };
 

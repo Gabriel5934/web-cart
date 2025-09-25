@@ -30,10 +30,10 @@ import duration from "dayjs/plugin/duration";
 import isToday from "dayjs/plugin/isToday";
 import relativeTime from "dayjs/plugin/relativeTime";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useBookings } from "../../../firebase/bookings/controller";
+import { useBookings } from "@/app/firebase/bookings/controller";
 import { History, WhatsApp } from "@mui/icons-material";
-import Booking from "../../../components/Booking";
-import { getConstants } from "../../../consts";
+import Booking from "@/app/components/Booking";
+import { getConstants } from "@/app/consts";
 import { Context } from "@/app/context";
 
 interface Booking {

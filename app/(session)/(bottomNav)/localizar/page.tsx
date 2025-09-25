@@ -1,10 +1,10 @@
 "use client";
 
 import { Alert, Box, Paper, Stack, Typography } from "@mui/material";
-import { useBookings } from "../../../firebase/bookings/controller";
+import { useBookings } from "@/app/firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { getConstants } from "../../../consts";
+import { getConstants } from "@/app/consts";
 
 export default function Page() {
   const { lastBookings, loading } = useBookings(false, true);

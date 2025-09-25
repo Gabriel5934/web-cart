@@ -3,11 +3,16 @@
 import { Button, Stack, TextField, Typography } from "@mui/material";
 import { useFormik } from "formik";
 import { object, string } from "yup";
-import { login } from "../lib";
+import { login } from "../firebase/users/controller";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { useContext } from "react";
+import { Context } from "../context";
 
 export default function Page() {
   const requiredMessage = "Campo Obrigatório";
+  const router = useRouter();
+  const context = useContext(Context);
 
   const schema = object({
     user: string().required(requiredMessage),
@@ -23,12 +28,17 @@ export default function Page() {
     onSubmit: async (data) => {
       try {
         await login(data);
+        router.push("/inicio");
       } catch (_e) {
         const error = _e as Error;
         toast.error(error.message);
       }
     },
   });
+
+  if (context.user) {
+    return router.push("/inicio");
+  }
 
   return (
     <div className="px-4 flex flex-col gap-2 h-screen justify-center">

@@ -4,11 +4,11 @@ import { db } from "./firebase";
 import { useUsers } from "./users/controller";
 
 export default function useUploadJson() {
-  const { getUsers } = useUsers();
+  const { read } = useUsers();
 
   const upload = async () => {
     try {
-      const existingUsers = await getUsers();
+      const existingUsers = await read();
       const newUsers = users.filter(
         (newUser) =>
           !existingUsers.some(
