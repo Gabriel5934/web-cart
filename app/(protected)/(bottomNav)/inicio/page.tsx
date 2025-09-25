@@ -30,10 +30,10 @@ import duration from "dayjs/plugin/duration";
 import isToday from "dayjs/plugin/isToday";
 import relativeTime from "dayjs/plugin/relativeTime";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useBookings } from "../../firebase/bookings/controller";
+import { useBookings } from "../../../firebase/bookings/controller";
 import { History, WhatsApp } from "@mui/icons-material";
-import Booking from "../../components/Booking";
-import { getConstants } from "../../consts";
+import Booking from "../../../components/Booking";
+import { getConstants } from "../../../consts";
 import { Context } from "@/app/context";
 
 interface Booking {
@@ -97,7 +97,7 @@ export default function Page() {
   const toggleOnlyMine = (value: boolean) => {
     const newOptions = {
       ...options,
-      user: value ? context.auth.user?.user : undefined,
+      user: value ? context.user?.user : undefined,
     };
 
     setOptions(newOptions);
@@ -263,7 +263,7 @@ export default function Page() {
                 control={
                   <Switch
                     onChange={(e) => toggleOnlyMine(e.target.checked)}
-                    checked={options.user === context.auth.user?.user}
+                    checked={options.user === context.user?.user}
                   />
                 }
                 label="Somente minhas reservas"

@@ -27,10 +27,13 @@ import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br";
-import { DEV_HOSTNAME, useBookings } from "../../firebase/bookings/controller";
+import {
+  DEV_HOSTNAME,
+  useBookings,
+} from "../../../firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { getConstants } from "../../consts";
+import { getConstants } from "../../../consts";
 import toast from "react-hot-toast";
 import { Context } from "@/app/context";
 import { BookingDoc } from "@/app/firebase/bookings/types";
@@ -79,7 +82,7 @@ export default function Page() {
       ...values,
       date: Timestamp.fromDate(values.date.toDate()),
       returned: false,
-      owner: context.auth.user?.user || "",
+      owner: context.user?.user || "",
     };
 
     try {
@@ -240,7 +243,7 @@ export default function Page() {
           <Formik<Inputs>
             initialValues={{
               device: "",
-              name: context.auth.user?.displayName ?? "",
+              name: context.user?.displayName ?? "",
               partner: "",
               place: "",
               date: null,
@@ -275,7 +278,7 @@ export default function Page() {
                           label="Seu Nome"
                           field="name"
                           formik={formik}
-                          disabled={Boolean(context.auth.user)}
+                          disabled={Boolean(context.user)}
                         />
                         <CustomTextField
                           label="Nome do companheiro(a)"

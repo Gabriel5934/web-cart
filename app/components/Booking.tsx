@@ -25,7 +25,7 @@ interface Props {
   setDrawerOpen: (open: boolean) => void;
   setDrawerBooking: (booking: Booking) => void;
   setReturnModal: (open: boolean) => void;
-  anchorRef: RefObject<HTMLDivElement>;
+  anchorRef: RefObject<HTMLDivElement | null>;
   index: number;
 }
 
