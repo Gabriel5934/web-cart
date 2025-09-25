@@ -32,7 +32,11 @@ export async function login(formData: { user: string; pinCode: string }) {
     if (!loggedInUser) throw new Error(undefined, { cause: 401 });
 
     const cookieStore = await cookies();
-    cookieStore.set("user", JSON.stringify(loggedInUser));
+    cookieStore.set({
+      name: "user",
+      value: JSON.stringify(loggedInUser),
+      expires: new Date("9999-12-31T23:59:59.999Z"),
+    });
   } catch (_e) {
     const error = _e as Error;
     if (error.cause === 401) {
