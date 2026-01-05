@@ -24,7 +24,7 @@ export const getConstants = () => {
       "Vicentina Aranha",
       "Hospital Santos Dumont",
     ],
-    DEVICES: ["Carrinho 1", "Display 1"],
+    DEVICES: ["Carrinho 1", "Display 1", "Carrinho 2", "Display 2"],
     WHATSAPP: "5512996456249",
     AUTH: true,
   };
