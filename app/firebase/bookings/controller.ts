@@ -77,7 +77,7 @@ export function useBookings(
 
       const q = query(
         collection(db, getCollectionName(window.location.hostname)),
-        orderBy("date")
+        orderBy("date", "desc")
       );
       const querySnapshot = await getDocs(q);
 

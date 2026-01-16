@@ -30,7 +30,7 @@ export default function Page() {
           </Typography>
         </Paper>
 
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ maxHeight: 285 }}>
           <Table size="small" aria-label="reservas">
             <TableHead>
               <TableRow>
@@ -63,7 +63,7 @@ export default function Page() {
           </Typography>
         </Paper>
 
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ maxHeight: 285 }}>
           <Table size="small" aria-label="reservas">
             <TableHead>
               <TableRow>
