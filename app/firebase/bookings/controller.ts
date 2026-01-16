@@ -15,6 +15,7 @@ import _ from "lodash";
 import { Booking, BookingDoc } from "./types";
 import {
   formatBookings,
+  getBookingsWithinWindow,
   getLastBookingForDevices,
   getUniqueUsers,
   groupByDates,
@@ -67,6 +68,9 @@ export function useBookings(
   >({});
   const [newBooking, setNewBooking] = useState<string | null>(null);
   const [uniqueUsers, setUniqueUsers] = useState<Array<string>>([]);
+  const [bookingsWithinWindow, setBookingsWithinWindow] = useState<
+    Array<Booking>
+  >([]);
 
   async function fetchData(options: {
     backwardsRange?: number;
@@ -94,12 +98,17 @@ export function useBookings(
         toast.success(`${filteredByUser.length} reservas encontradas`);
       }
       const toBeUniqueUsers = getUniqueUsers(filteredByUser);
+      const toBeBookingsWithinWindow = getBookingsWithinWindow(
+        filteredByUser,
+        options.backwardsRange ?? initialBackwardsRange ?? 0
+      );
 
       setBookings(filteredByUser);
       setBookingsByDate(grouped);
       setDates(dates);
       setLastBookings(toBeLastBookings);
       setUniqueUsers(toBeUniqueUsers);
+      setBookingsWithinWindow(toBeBookingsWithinWindow);
     } catch (error) {
       console.log(error);
 
@@ -158,5 +167,6 @@ export function useBookings(
     deleteData,
     toggleReturned,
     uniqueUsers,
+    bookingsWithinWindow,
   };
 }

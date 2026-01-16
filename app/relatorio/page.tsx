@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 
 export default function Page() {
-  const { uniqueUsers, bookings } = useBookings(false, false, 180);
+  const { uniqueUsers, bookingsWithinWindow } = useBookings(false, false, 180);
 
   return (
     <div className="py-4 px-2">
@@ -73,7 +73,7 @@ export default function Page() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {bookings.map((booking) => (
+              {bookingsWithinWindow.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell>
                     {booking.name}

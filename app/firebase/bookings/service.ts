@@ -42,6 +42,17 @@ export function groupByDates(bookings: Array<Booking>, backwardsRange: number) {
   return { grouped, dates: Object.keys(grouped) };
 }
 
+export function getBookingsWithinWindow(
+  bookings: Array<Booking>,
+  backwardsRange: number
+) {
+  return bookings.filter((booking) =>
+    booking.date.isSameOrAfter(
+      dayjs().startOf("day").subtract(backwardsRange, "day")
+    )
+  );
+}
+
 export function getLastBookingForDevices(bookings: Array<Booking>) {
   const byDevice = _.groupBy(bookings, "device");
 
