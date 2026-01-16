@@ -16,6 +16,7 @@ import { Booking, BookingDoc } from "./types";
 import {
   formatBookings,
   getLastBookingForDevices,
+  getUniqueUsers,
   groupByDates,
 } from "./service";
 import toast from "react-hot-toast";
@@ -50,7 +51,11 @@ const getCollectionName = (hostname: string): string => {
   return "noDeployBookings";
 };
 
-export function useBookings(showSucces: boolean, showError: boolean) {
+export function useBookings(
+  showSucces: boolean,
+  showError: boolean,
+  initialBackwardsRange?: number
+) {
   const [bookings, setBookings] = useState<Array<Booking>>([]);
   const [loading, setLoading] = useState(true);
   const [dates, setDates] = useState<Array<keyof _.Dictionary<Booking[]>>>([]);
@@ -61,6 +66,7 @@ export function useBookings(showSucces: boolean, showError: boolean) {
     Record<string, Booking | undefined>
   >({});
   const [newBooking, setNewBooking] = useState<string | null>(null);
+  const [uniqueUsers, setUniqueUsers] = useState<Array<string>>([]);
 
   async function fetchData(options: {
     backwardsRange?: number;
@@ -81,17 +87,19 @@ export function useBookings(showSucces: boolean, showError: boolean) {
         : bookings;
       const { grouped, dates } = groupByDates(
         filteredByUser,
-        options.backwardsRange ?? 0
+        options.backwardsRange ?? initialBackwardsRange ?? 0
       );
       const toBeLastBookings = getLastBookingForDevices(filteredByUser);
       if (showSucces) {
         toast.success(`${filteredByUser.length} reservas encontradas`);
       }
+      const toBeUniqueUsers = getUniqueUsers(filteredByUser);
 
       setBookings(filteredByUser);
       setBookingsByDate(grouped);
       setDates(dates);
       setLastBookings(toBeLastBookings);
+      setUniqueUsers(toBeUniqueUsers);
     } catch (error) {
       console.log(error);
 
@@ -149,5 +157,6 @@ export function useBookings(showSucces: boolean, showError: boolean) {
     addData,
     deleteData,
     toggleReturned,
+    uniqueUsers,
   };
 }

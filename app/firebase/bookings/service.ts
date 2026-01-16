@@ -53,3 +53,10 @@ export function getLastBookingForDevices(bookings: Array<Booking>) {
     return _.last(ordered);
   });
 }
+
+export function getUniqueUsers(bookings: Array<Booking>) {
+  const owners = bookings.map((booking) => booking.owner);
+  const partners = bookings.map((booking) => booking.partner);
+
+  return _.uniq([...owners, ...partners]);
+}
