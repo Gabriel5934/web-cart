@@ -76,7 +76,7 @@ export default function Page() {
               {bookings.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell>
-                    {booking.owner}
+                    {booking.name}
                     <br />
                     {booking.device}
                   </TableCell>

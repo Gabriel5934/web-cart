@@ -55,7 +55,7 @@ export function getLastBookingForDevices(bookings: Array<Booking>) {
 }
 
 export function getUniqueUsers(bookings: Array<Booking>) {
-  const owners = bookings.map((booking) => booking.owner);
+  const owners = bookings.map((booking) => booking.name);
   const partners = bookings.map((booking) => booking.partner);
 
   return _.uniq([...owners, ...partners]);
