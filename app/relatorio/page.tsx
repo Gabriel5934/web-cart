@@ -79,6 +79,8 @@ export default function Page() {
                     {booking.name}
                     <br />
                     {booking.device}
+                    <br />
+                    {booking.place}
                   </TableCell>
                   <TableCell align="center">
                     {booking.date.format("DD/MM/YYYY")}
