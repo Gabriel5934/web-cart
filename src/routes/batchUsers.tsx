@@ -1,9 +1,12 @@
-"use client";
-
+import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@mui/material";
-import useUploadJson from "../firebase/useUploadJson";
+import useUploadJson from "@/firebase/useUploadJson";
 
-export default function Page() {
+export const Route = createFileRoute("/batchUsers")({
+  component: BatchUsersPage,
+});
+
+function BatchUsersPage() {
   const { upload } = useUploadJson();
 
   return (

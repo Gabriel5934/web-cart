@@ -9,11 +9,8 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
-
-# production
+# build output
+/dist
 /build
 
 # misc
@@ -33,7 +30,9 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+
+# tanstack router (generated)
+src/routeTree.gen.ts
 
 # firebase
 firebase-debug.log

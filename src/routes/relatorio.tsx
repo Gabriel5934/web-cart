@@ -1,6 +1,5 @@
-"use client";
-
-import { useBookings } from "../firebase/bookings/controller";
+import { createFileRoute } from "@tanstack/react-router";
+import { useBookings } from "@/firebase/bookings/controller";
 import {
   Table,
   TableBody,
@@ -12,7 +11,11 @@ import {
   Typography,
 } from "@mui/material";
 
-export default function Page() {
+export const Route = createFileRoute("/relatorio")({
+  component: RelatorioPage,
+});
+
+function RelatorioPage() {
   const { uniqueUsers, bookingsWithinWindow } = useBookings(false, false, 180);
 
   return (

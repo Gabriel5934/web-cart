@@ -2,11 +2,13 @@
   "name": "web-cart",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "vite",
+    "routes:generate": "tsr generate",
+    "build": "tsr generate && tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -15,26 +17,30 @@
     "@mui/icons-material": "^6.1.2",
     "@mui/material": "^6.1.2",
     "@mui/x-date-pickers": "^7.19.0",
-    "@types/lodash": "^4.17.10",
+    "@tanstack/react-router": "^1.87.0",
     "dayjs": "^1.11.13",
     "firebase": "^10.14.0",
     "formik": "^2.4.6",
     "lodash": "^4.17.21",
-    "next": "14.2.14",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-hot-toast": "^2.6.0",
     "react-loading-skeleton": "^3.5.0",
     "yup": "^1.4.0"
   },
   "devDependencies": {
+    "@tanstack/router-cli": "^1.167.21",
+    "@tanstack/router-plugin": "^1.168.23",
+    "@types/lodash": "^4.17.10",
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.14",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.13.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
   }
 }
