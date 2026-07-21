@@ -32,7 +32,7 @@ type Environment = "dev" | "prod";
 
 const getCollectionName = (hostname: string): string => {
   const isDevelopment = DEV_HOSTNAME.includes(hostname);
-  const deploy = process.env.NEXT_PUBLIC_DEPLOY as DeploymentType;
+  const deploy = import.meta.env.VITE_DEPLOY as DeploymentType;
 
   const collections: Record<DeploymentType, Record<Environment, string>> = {
     aquarius: {

@@ -2,7 +2,7 @@ import { collection, getDocs, query } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
 import { db } from "../firebase";
 import { User, UserDoc } from "./types";
-import { Context } from "@/app/context";
+import { Context } from "@/context";
 import toast from "react-hot-toast";
 
 export const useUsers = () => {

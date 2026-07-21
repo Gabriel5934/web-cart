@@ -29,7 +29,7 @@ export const getConstants = () => {
     AUTH: true,
   };
 
-  const deploy = process.env.NEXT_PUBLIC_DEPLOY;
+  const deploy = import.meta.env.VITE_DEPLOY;
   if (deploy === "aquarius") {
     return aquarius;
   } else if (deploy === "esplanada") {

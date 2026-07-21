@@ -1,5 +1,4 @@
-"use client";
-
+import { createFileRoute } from "@tanstack/react-router";
 import {
   Autocomplete,
   Box,
@@ -7,10 +6,15 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useUsers } from "../firebase/users/controller";
+import { useUsers } from "@/firebase/users/controller";
 import { useState } from "react";
-import { User } from "../firebase/users/types";
-export default function Page() {
+import { User } from "@/firebase/users/types";
+
+export const Route = createFileRoute("/mensagem-de-usuario")({
+  component: MensagemDeUsuarioPage,
+});
+
+function MensagemDeUsuarioPage() {
   const { users } = useUsers();
 
   const autocompleteOptions = users.map((user) => user.displayName);

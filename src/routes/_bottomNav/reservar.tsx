@@ -1,5 +1,4 @@
-"use client";
-
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Autocomplete,
   Backdrop,
@@ -19,21 +18,19 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
 import dayjs, { Dayjs } from "dayjs";
 import { Timestamp } from "firebase/firestore";
-import { useRouter } from "next/navigation";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import { LocationOn } from "@mui/icons-material";
 import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
-import "dayjs/locale/pt-br";
-import { DEV_HOSTNAME, useBookings } from "../../firebase/bookings/controller";
+import { DEV_HOSTNAME, useBookings } from "@/firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { getConstants } from "../../consts";
+import { getConstants } from "@/consts";
 import toast from "react-hot-toast";
-import { Context } from "@/app/context";
-import { BookingDoc } from "@/app/firebase/bookings/types";
+import { Context } from "@/context";
+import { BookingDoc } from "@/firebase/bookings/types";
 
 interface Inputs {
   device: string;
@@ -62,13 +59,17 @@ const OPENINGS = [
 
 const BOOKED = "Reservado";
 
-export default function Page() {
+export const Route = createFileRoute("/_bottomNav/reservar")({
+  component: ReservarPage,
+});
+
+function ReservarPage() {
   const { PLACES, DEVICES } = getConstants();
   const { bookings, loading } = useBookings(false, true);
   const { addData } = useBookings(false, true);
   const context = useContext(Context);
 
-  const router = useRouter();
+  const navigate = useNavigate();
   const [showBackdrop, setShowBackdrop] = useState(false);
   const [timeStringOptions, setTimeStringOptions] = useState<Array<string>>([]);
 
@@ -85,7 +86,7 @@ export default function Page() {
     try {
       setShowBackdrop(true);
       await addData(formatted);
-      router.push("/inicio");
+      navigate({ to: "/inicio" });
     } catch (e) {
       setShowBackdrop(false);
       console.error("Error adding document: ", e);

@@ -1,5 +1,4 @@
-"use client";
-
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Accordion,
   AccordionDetails,
@@ -18,23 +17,22 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import Link from "next/link";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
 import { createRef, useContext, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
-import Image from "next/image";
 import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
 import isToday from "dayjs/plugin/isToday";
 import relativeTime from "dayjs/plugin/relativeTime";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useBookings } from "../../firebase/bookings/controller";
+import { useBookings } from "@/firebase/bookings/controller";
 import { History, WhatsApp } from "@mui/icons-material";
-import Booking from "../../components/Booking";
-import { getConstants } from "../../consts";
-import { Context } from "@/app/context";
+import Booking from "@/components/Booking";
+import { getConstants } from "@/consts";
+import { Context } from "@/context";
 
 interface Booking {
   id: string;
@@ -57,7 +55,11 @@ interface RefreshOptions {
   user: string | undefined;
 }
 
-export default function Page() {
+export const Route = createFileRoute("/_bottomNav/inicio")({
+  component: InicioPage,
+});
+
+function InicioPage() {
   const {
     dates,
     bookingsByDate,
@@ -211,9 +213,9 @@ export default function Page() {
       </Drawer>
 
       <div className="inline-block overflow-hidden relative w-full">
-        <Image
+        <img
           className="pointer-events-none absolute w-full -z-10"
-          src={BACKGROUND_IMAGE}
+          src={BACKGROUND_IMAGE as string}
           alt="Testemunho público"
           style={{
             filter: "brightness(25%)",
@@ -237,7 +239,7 @@ export default function Page() {
             {" de "}
             {dayjs().format("MMMM")}
           </Typography>
-          <Link href="/reservar">
+          <Link to="/reservar">
             <Button variant="contained" size="large">
               fazer reserva
             </Button>
