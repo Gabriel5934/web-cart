@@ -27,7 +27,6 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { DEV_HOSTNAME, useBookings } from "@/firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { getConstants } from "@/consts";
 import toast from "react-hot-toast";
 import { Context } from "@/context";
 import { BookingDoc } from "@/firebase/bookings/types";
@@ -64,10 +63,10 @@ export const Route = createFileRoute("/_bottomNav/reservar")({
 });
 
 function ReservarPage() {
-  const { PLACES, DEVICES } = getConstants();
   const { bookings, loading } = useBookings(false, true);
   const { addData } = useBookings(false, true);
   const context = useContext(Context);
+  const congregation = context.congregation.data;
 
   const navigate = useNavigate();
   const [showBackdrop, setShowBackdrop] = useState(false);
@@ -76,11 +75,11 @@ function ReservarPage() {
   const onSubmit = async (values: Inputs) => {
     if (!values.date) return;
 
-    const formatted: Omit<BookingDoc, "id"> = {
+    const formatted: Omit<BookingDoc, "id" | "congregation"> = {
       ...values,
       date: Timestamp.fromDate(values.date.toDate()),
       returned: false,
-      owner: context.auth.user?.user || "",
+      owner: context.auth.user?.phoneNumber || "",
     };
 
     try {
@@ -227,12 +226,13 @@ function ReservarPage() {
       </Backdrop>
 
       <Box
-        sx={(theme) => ({ bgcolor: theme.palette.primary.main })}
+        sx={{
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
+        }}
         className="px-4 pt-20 pb-4"
       >
-        <Typography variant="h4" color="white">
-          Fazer Reserva
-        </Typography>
+        <Typography variant="h4">Fazer Reserva</Typography>
       </Box>
       <div className="flex flex-col p-8 gap-4 items-center">
         {loading ? (
@@ -241,7 +241,10 @@ function ReservarPage() {
           <Formik<Inputs>
             initialValues={{
               device: "",
-              name: context.auth.user?.displayName ?? "",
+              name:
+                context.phoneBook.entry?.displayName ??
+                context.auth.user?.displayName ??
+                "",
               partner: "",
               place: "",
               date: null,
@@ -261,7 +264,7 @@ function ReservarPage() {
                   className="flex flex-col items-center gap-4 w-full"
                 >
                   <CustomAutocomplete
-                    options={DEVICES}
+                    options={congregation?.devices ?? []}
                     label="Dispositivo"
                     formik={formik}
                     field="device"
@@ -276,7 +279,10 @@ function ReservarPage() {
                           label="Seu Nome"
                           field="name"
                           formik={formik}
-                          disabled={Boolean(context.auth.user)}
+                          disabled={Boolean(
+                            context.phoneBook.entry?.displayName ??
+                              context.auth.user?.displayName
+                          )}
                         />
                         <CustomTextField
                           label="Nome do companheiro(a)"
@@ -291,7 +297,7 @@ function ReservarPage() {
                       </div>
                       <div className="flex gap-4 flex-col w-full">
                         <CustomAutocomplete
-                          options={PLACES}
+                          options={congregation?.places ?? []}
                           label="Local"
                           formik={formik}
                           field="place"

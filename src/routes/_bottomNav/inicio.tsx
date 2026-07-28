@@ -28,10 +28,10 @@ import duration from "dayjs/plugin/duration";
 import isToday from "dayjs/plugin/isToday";
 import relativeTime from "dayjs/plugin/relativeTime";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useBookings } from "@/firebase/bookings/controller";
 import { History, WhatsApp } from "@mui/icons-material";
 import Booking from "@/components/Booking";
-import { getConstants } from "@/consts";
 import { Context } from "@/context";
 
 interface Booking {
@@ -55,6 +55,13 @@ interface RefreshOptions {
   user: string | undefined;
 }
 
+const kebabToTitleCase = (value: string) =>
+  value
+    .split(/[-\s]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+
 export const Route = createFileRoute("/_bottomNav/inicio")({
   component: InicioPage,
 });
@@ -69,9 +76,8 @@ function InicioPage() {
     toggleReturned,
   } = useBookings(false, true);
   const anchorRef = createRef<HTMLDivElement>();
-  const { SAFE_DELETE_TEXT, CONGREGATION, BACKGROUND_IMAGE, WHATSAPP, AUTH } =
-    getConstants();
   const context = useContext(Context);
+  const congregation = context.congregation.data;
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [returnModal, setReturnModal] = useState(false);
@@ -99,7 +105,7 @@ function InicioPage() {
   const toggleOnlyMine = (value: boolean) => {
     const newOptions = {
       ...options,
-      user: value ? context.auth.user?.user : undefined,
+      user: value ? context.auth.user?.phoneNumber ?? undefined : undefined,
     };
 
     setOptions(newOptions);
@@ -134,12 +140,16 @@ function InicioPage() {
 
   return (
     <>
-      <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener">
+      <a
+        href={`https://wa.me/${congregation?.whatsapp ?? ""}`}
+        target="_blank"
+        rel="noopener"
+      >
         <Fab
           variant="extended"
           sx={{
             position: "fixed",
-            bottom: 88,
+            bottom: import.meta.env.DEV ? 138 : 88,
             right: 16,
           }}
           color="success"
@@ -187,7 +197,7 @@ function InicioPage() {
           <AccordionDetails>
             <div className="flex flex-col gap-2">
               <Typography className="mb-2">
-                {`Digite "${SAFE_DELETE_TEXT}" para deletar essa reserva`}
+                {`Digite "${congregation?.safeDeleteText ?? ""}" para deletar essa reserva`}
               </Typography>
               <div>
                 <TextField
@@ -201,7 +211,9 @@ function InicioPage() {
                 <Button
                   color="error"
                   variant="contained"
-                  disabled={safeDeleteText !== SAFE_DELETE_TEXT}
+                  disabled={
+                    safeDeleteText !== congregation?.safeDeleteText
+                  }
                   onClick={() => deleteBooking(drawerBooking?.id ?? "")}
                 >
                   deletar
@@ -215,7 +227,7 @@ function InicioPage() {
       <div className="inline-block overflow-hidden relative w-full">
         <img
           className="pointer-events-none absolute w-full -z-10"
-          src={BACKGROUND_IMAGE as string}
+          src={congregation?.backgroundImage}
           alt="Testemunho público"
           style={{
             filter: "brightness(25%)",
@@ -226,10 +238,14 @@ function InicioPage() {
         <div className="px-8 py-8 flex flex-col gap-8">
           <div>
             <Typography variant="h6" color="white">
-              {CONGREGATION}
+              {kebabToTitleCase(
+                context.phoneBook.entry?.congregation ??
+                  congregation?.id ??
+                  ""
+              )}
             </Typography>
-            <Typography variant="h5" color="white">
-              Testemunho Público
+            <Typography variant="h5" color="white" className="capitalize">
+              {context.phoneBook.entry?.displayName ?? "Testemunho Público"}
             </Typography>
           </div>
           <Typography variant="h5" color="white" className="capitalize">
@@ -250,7 +266,7 @@ function InicioPage() {
       <Box sx={{ paddingX: 4 }}>
         <Stack sx={{ marginBottom: 2 }} gap={1}>
           <Typography variant="h4">Próximas Reservas</Typography>
-          <div>
+          <div className="flex gap-2">
             <Button
               variant="outlined"
               startIcon={<History />}
@@ -258,14 +274,21 @@ function InicioPage() {
             >
               ver {options.backwardsRange === 30 ? "menos" : "mais"}
             </Button>
+            <Link to="/localizar">
+              <Button variant="outlined" startIcon={<LocationOnIcon />}>
+                localizar
+              </Button>
+            </Link>
           </div>
-          {AUTH && (
+          {congregation?.auth && (
             <div>
               <FormControlLabel
                 control={
                   <Switch
                     onChange={(e) => toggleOnlyMine(e.target.checked)}
-                    checked={options.user === context.auth.user?.user}
+                    checked={
+                      options.user === context.auth.user?.phoneNumber
+                    }
                   />
                 }
                 label="Somente minhas reservas"

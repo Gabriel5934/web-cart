@@ -8,9 +8,10 @@ import {
   deleteDoc,
   updateDoc,
   getDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import _ from "lodash";
 import { Booking, BookingDoc } from "./types";
 import {
@@ -21,42 +22,23 @@ import {
   groupByDates,
 } from "./service";
 import toast from "react-hot-toast";
+import { Context } from "@/context";
 
 export const DEV_HOSTNAME = [
   "web-cart-git-develop-gabriel5934s-projects.vercel.app",
   "web-cart-git-main-gabriel5934s-projects.vercel.app",
 ];
 
-type DeploymentType = "aquarius" | "esplanada";
-type Environment = "dev" | "prod";
-
-const getCollectionName = (hostname: string): string => {
-  const isDevelopment = DEV_HOSTNAME.includes(hostname);
-  const deploy = import.meta.env.VITE_DEPLOY as DeploymentType;
-
-  const collections: Record<DeploymentType, Record<Environment, string>> = {
-    aquarius: {
-      dev: "bookingsDevAquarius",
-      prod: "bookingsAquarius",
-    },
-    esplanada: {
-      dev: "bookingsDev",
-      prod: "bookings",
-    },
-  };
-
-  if (deploy && collections[deploy]) {
-    return collections[deploy][isDevelopment ? "dev" : "prod"];
-  }
-
-  return "noDeployBookings";
-};
+const BOOKINGS_COLLECTION = "new-bookings";
 
 export function useBookings(
   showSucces: boolean,
   showError: boolean,
   initialBackwardsRange?: number
 ) {
+  const context = useContext(Context);
+  const congregationId =
+    context.phoneBook.entry?.congregation ?? context.congregation.data?.id;
   const [bookings, setBookings] = useState<Array<Booking>>([]);
   const [loading, setLoading] = useState(true);
   const [dates, setDates] = useState<Array<keyof _.Dictionary<Booking[]>>>([]);
@@ -79,8 +61,19 @@ export function useBookings(
     try {
       setLoading(true);
 
+      if (!congregationId) {
+        setBookings([]);
+        setBookingsByDate({});
+        setDates([]);
+        setLastBookings({});
+        setUniqueUsers([]);
+        setBookingsWithinWindow([]);
+        return;
+      }
+
       const q = query(
-        collection(db, getCollectionName(window.location.hostname)),
+        collection(db, BOOKINGS_COLLECTION),
+        where("congregation", "==", congregationId),
         orderBy("date", "desc")
       );
       const querySnapshot = await getDocs(q);
@@ -120,11 +113,17 @@ export function useBookings(
     }
   }
 
-  async function addData(booking: Omit<BookingDoc, "id">) {
+  async function addData(
+    booking: Omit<BookingDoc, "id" | "congregation">
+  ) {
     try {
+      if (!congregationId) {
+        throw new Error("Cannot create a booking without a congregation");
+      }
+
       const docRef = await addDoc(
-        collection(db, getCollectionName(window.location.hostname)),
-        booking
+        collection(db, BOOKINGS_COLLECTION),
+        { ...booking, congregation: congregationId }
       );
 
       setNewBooking(docRef.id);
@@ -136,11 +135,11 @@ export function useBookings(
   }
 
   function deleteData(id: string) {
-    return deleteDoc(doc(db, getCollectionName(window.location.hostname), id));
+    return deleteDoc(doc(db, BOOKINGS_COLLECTION, id));
   }
 
   async function toggleReturned(id: string) {
-    const bookingRef = doc(db, getCollectionName(window.location.hostname), id);
+    const bookingRef = doc(db, BOOKINGS_COLLECTION, id);
     const bookingSnap = await getDoc(bookingRef);
     const data = bookingSnap.data();
 
@@ -153,7 +152,7 @@ export function useBookings(
 
   useEffect(() => {
     fetchData({});
-  }, []);
+  }, [congregationId]);
 
   return {
     loading,

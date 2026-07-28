@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
+    "emulators": "docker compose up --build firebase-emulators",
+    "emulators:down": "docker compose down",
     "routes:generate": "tsr generate",
     "build": "tsr generate && tsc -b && vite build",
     "preview": "vite preview",
@@ -29,6 +31,7 @@
     "yup": "^1.4.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@tanstack/router-cli": "^1.167.21",
     "@tanstack/router-plugin": "^1.168.23",
     "@types/lodash": "^4.17.10",
@@ -38,9 +41,13 @@
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.8.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3",
+    "typescript-eslint": "^8.65.0",
     "vite": "^5.4.10"
   }
 }

@@ -1,0 +1,7 @@
+.git
+.tanstack
+dist
+firebase-state
+node_modules
+*.log
+*.tsbuildinfo

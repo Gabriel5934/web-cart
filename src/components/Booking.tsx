@@ -64,9 +64,9 @@ export default function Booking(props: Props) {
           sx={{
             bgcolor: "primary.main",
             filter: `brightness(${isPast ? 0.5 : 1})`,
-            color: "white",
+            color: "primary.contrastText",
           }}
-          className="flex flex-col p-4 rounded-md text-white w-full"
+          className="flex flex-col p-4 rounded-md w-full"
           id={props.booking.id}
           ref={props.anchorRef}
         >

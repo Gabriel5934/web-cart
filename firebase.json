@@ -5,13 +5,17 @@
   },
   "emulators": {
     "firestore": {
-      "port": 8080
+      "host": "0.0.0.0",
+      "port": 8085
     },
     "auth": {
+      "host": "0.0.0.0",
       "port": 9099
     },
     "ui": {
       "enabled": true,
+      "host": "0.0.0.0",
+      "webSocketPort": 9150,
       "port": 4000
     }
   }

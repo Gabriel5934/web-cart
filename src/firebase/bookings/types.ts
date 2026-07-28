@@ -3,6 +3,7 @@ import { Timestamp } from "firebase/firestore";
 
 export interface BookingDoc {
   id: string;
+  congregation: string;
   device: string;
   name: string;
   partner: string;
@@ -14,6 +15,7 @@ export interface BookingDoc {
 
 export interface Booking {
   id: string;
+  congregation: string;
   device: string;
   name: string;
   partner: string;
