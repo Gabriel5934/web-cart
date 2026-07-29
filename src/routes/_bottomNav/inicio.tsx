@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
-import { createRef, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -75,7 +75,6 @@ function InicioPage() {
     deleteData,
     toggleReturned,
   } = useBookings(false, true);
-  const anchorRef = createRef<HTMLDivElement>();
   const context = useContext(Context);
   const congregation = context.congregation.data;
 
@@ -105,7 +104,9 @@ function InicioPage() {
   const toggleOnlyMine = (value: boolean) => {
     const newOptions = {
       ...options,
-      user: value ? context.auth.user?.phoneNumber ?? undefined : undefined,
+      user: value
+        ? context.phoneBook.entry?.displayName ?? undefined
+        : undefined,
     };
 
     setOptions(newOptions);
@@ -128,15 +129,28 @@ function InicioPage() {
     refreshWithOptions();
   };
 
+  const scrollTargetBookingId = dates
+    .flatMap((date) => bookingsByDate[date] ?? [])
+    .find(
+      (booking) =>
+        dayjs().isBetween(
+          booking.date,
+          booking.date.add(2, "hour")
+        ) ||
+        dayjs().isBetween(
+          booking.date.subtract(2, "hour"),
+          booking.date
+        )
+    )?.id;
+
   useEffect(() => {
-    if (anchorRef.current) {
-      const current = anchorRef.current;
-      current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
-  }, [anchorRef]);
+    if (!scrollTargetBookingId) return;
+
+    document.getElementById(scrollTargetBookingId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [scrollTargetBookingId]);
 
   return (
     <>
@@ -280,21 +294,19 @@ function InicioPage() {
               </Button>
             </Link>
           </div>
-          {congregation?.auth && (
-            <div>
-              <FormControlLabel
-                control={
-                  <Switch
-                    onChange={(e) => toggleOnlyMine(e.target.checked)}
-                    checked={
-                      options.user === context.auth.user?.phoneNumber
-                    }
-                  />
-                }
-                label="Somente minhas reservas"
-              />
-            </div>
-          )}
+          <div>
+            <FormControlLabel
+              control={
+                <Switch
+                  onChange={(e) => toggleOnlyMine(e.target.checked)}
+                  checked={
+                    options.user === context.phoneBook.entry?.displayName
+                  }
+                />
+              }
+              label="Somente minhas reservas"
+            />
+          </div>
         </Stack>
 
         <Stack spacing={2}>
@@ -320,7 +332,6 @@ function InicioPage() {
                     setDrawerOpen={setDrawerOpen}
                     setReturnModal={setReturnModal}
                     key={booking.date.toISOString()}
-                    anchorRef={anchorRef}
                     index={index}
                   />
                 ))}

@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
+  Alert,
   Backdrop,
   Button,
   CircularProgress,
@@ -39,7 +40,13 @@ function CompleteProfilePage() {
   const { saveEntry } = usePhoneBook();
 
   useEffect(() => {
-    if (context.auth.loading || context.phoneBook.loading) return;
+    if (
+      context.auth.loading ||
+      context.phoneBook.loading ||
+      context.phoneBook.error
+    ) {
+      return;
+    }
 
     if (!context.auth.user) {
       navigate({ to: "/" });
@@ -50,6 +57,7 @@ function CompleteProfilePage() {
     context.auth.loading,
     context.auth.user,
     context.phoneBook.entry,
+    context.phoneBook.error,
     context.phoneBook.loading,
     navigate,
   ]);
@@ -95,6 +103,17 @@ function CompleteProfilePage() {
       <Backdrop open>
         <CircularProgress />
       </Backdrop>
+    );
+  }
+
+  if (context.phoneBook.error) {
+    return (
+      <div className="px-4 flex h-screen items-center justify-center">
+        <Alert severity="error">
+          Não foi possível verificar seu cadastro. Atualize a página e tente
+          novamente.
+        </Alert>
+      </div>
     );
   }
 

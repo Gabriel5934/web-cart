@@ -1,5 +1,4 @@
 export interface Congregation {
-  auth: boolean;
   backgroundImage: string;
   devices: string[];
   id: string;

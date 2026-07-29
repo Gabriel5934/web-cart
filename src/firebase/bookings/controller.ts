@@ -11,7 +11,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { Booking, BookingDoc } from "./types";
 import {
@@ -37,8 +37,7 @@ export function useBookings(
   initialBackwardsRange?: number
 ) {
   const context = useContext(Context);
-  const congregationId =
-    context.phoneBook.entry?.congregation ?? context.congregation.data?.id;
+  const congregationId = context.phoneBook.entry?.congregation;
   const [bookings, setBookings] = useState<Array<Booking>>([]);
   const [loading, setLoading] = useState(true);
   const [dates, setDates] = useState<Array<keyof _.Dictionary<Booking[]>>>([]);
@@ -53,65 +52,82 @@ export function useBookings(
   const [bookingsWithinWindow, setBookingsWithinWindow] = useState<
     Array<Booking>
   >([]);
+  const requestIdRef = useRef(0);
 
-  async function fetchData(options: {
-    backwardsRange?: number;
-    user?: string;
-  }) {
-    try {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (options: {
+      backwardsRange?: number;
+      user?: string;
+    }) => {
+      const requestId = ++requestIdRef.current;
+      const isActive = () => requestId === requestIdRef.current;
 
-      if (!congregationId) {
-        setBookings([]);
-        setBookingsByDate({});
-        setDates([]);
-        setLastBookings({});
-        setUniqueUsers([]);
-        setBookingsWithinWindow([]);
-        return;
+      try {
+        setLoading(true);
+
+        if (!congregationId) {
+          if (isActive()) {
+            setBookings([]);
+            setBookingsByDate({});
+            setDates([]);
+            setLastBookings({});
+            setUniqueUsers([]);
+            setBookingsWithinWindow([]);
+          }
+          return;
+        }
+
+        const q = query(
+          collection(db, BOOKINGS_COLLECTION),
+          where("congregation", "==", congregationId),
+          orderBy("date", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+
+        if (!isActive()) return;
+
+        const bookings = formatBookings(querySnapshot);
+        const filteredByUser = options.user
+          ? bookings.filter(
+              (booking) =>
+                booking.name === options.user ||
+                booking.partner === options.user
+            )
+          : bookings;
+        const { grouped, dates } = groupByDates(
+          filteredByUser,
+          options.backwardsRange ?? initialBackwardsRange ?? 0
+        );
+        const toBeLastBookings = getLastBookingForDevices(filteredByUser);
+        if (showSucces) {
+          toast.success(`${filteredByUser.length} reservas encontradas`);
+        }
+        const toBeUniqueUsers = getUniqueUsers(filteredByUser);
+        const toBeBookingsWithinWindow = getBookingsWithinWindow(
+          filteredByUser,
+          options.backwardsRange ?? initialBackwardsRange ?? 0
+        );
+
+        setBookings(filteredByUser);
+        setBookingsByDate(grouped);
+        setDates(dates);
+        setLastBookings(toBeLastBookings);
+        setUniqueUsers(toBeUniqueUsers);
+        setBookingsWithinWindow(toBeBookingsWithinWindow);
+      } catch (error) {
+        console.log(error);
+
+        if (isActive() && showError) {
+          toast.error("Algo deu errado");
+        }
+      } finally {
+        if (isActive()) {
+          setLoading(false);
+        }
       }
-
-      const q = query(
-        collection(db, BOOKINGS_COLLECTION),
-        where("congregation", "==", congregationId),
-        orderBy("date", "desc")
-      );
-      const querySnapshot = await getDocs(q);
-
-      const bookings = formatBookings(querySnapshot);
-      const filteredByUser = options.user
-        ? bookings.filter((booking) => booking.owner === options.user)
-        : bookings;
-      const { grouped, dates } = groupByDates(
-        filteredByUser,
-        options.backwardsRange ?? initialBackwardsRange ?? 0
-      );
-      const toBeLastBookings = getLastBookingForDevices(filteredByUser);
-      if (showSucces) {
-        toast.success(`${filteredByUser.length} reservas encontradas`);
-      }
-      const toBeUniqueUsers = getUniqueUsers(filteredByUser);
-      const toBeBookingsWithinWindow = getBookingsWithinWindow(
-        filteredByUser,
-        options.backwardsRange ?? initialBackwardsRange ?? 0
-      );
-
-      setBookings(filteredByUser);
-      setBookingsByDate(grouped);
-      setDates(dates);
-      setLastBookings(toBeLastBookings);
-      setUniqueUsers(toBeUniqueUsers);
-      setBookingsWithinWindow(toBeBookingsWithinWindow);
-    } catch (error) {
-      console.log(error);
-
-      if (showError) {
-        toast.error("Algo deu errado");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+    [congregationId, initialBackwardsRange, showError, showSucces]
+  );
 
   async function addData(
     booking: Omit<BookingDoc, "id" | "congregation">
@@ -131,6 +147,8 @@ export function useBookings(
       toast.success("Reserva feita com sucesso");
     } catch (error) {
       console.log(error);
+      toast.error("Não foi possível fazer a reserva");
+      throw error;
     }
   }
 
@@ -151,8 +169,12 @@ export function useBookings(
   }
 
   useEffect(() => {
-    fetchData({});
-  }, [congregationId]);
+    void fetchData({});
+
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [fetchData]);
 
   return {
     loading,

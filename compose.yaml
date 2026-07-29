@@ -6,10 +6,10 @@ services:
     init: true
     stop_grace_period: 30s
     ports:
-      - "4000:4000"
-      - "8085:8085"
-      - "9099:9099"
-      - "9150:9150"
+      - "127.0.0.1:4000:4000"
+      - "127.0.0.1:8085:8085"
+      - "127.0.0.1:9099:9099"
+      - "127.0.0.1:9150:9150"
     volumes:
       - ./.firebaserc:/workspace/.firebaserc:ro
       - ./firebase.json:/workspace/firebase.json:ro

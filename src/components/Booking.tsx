@@ -7,7 +7,6 @@ import {
   Button,
 } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
-import { RefObject } from "react";
 import GrowWrapper from "./Grow";
 
 interface Booking {
@@ -25,7 +24,6 @@ interface Props {
   setDrawerOpen: (open: boolean) => void;
   setDrawerBooking: (booking: Booking) => void;
   setReturnModal: (open: boolean) => void;
-  anchorRef: RefObject<HTMLDivElement>;
   index: number;
 }
 
@@ -38,8 +36,8 @@ export default function Booking(props: Props) {
   );
 
   const isNext = dayjs().isBetween(
-    props.booking.date,
-    props.booking.date.subtract(2, "hours")
+    props.booking.date.subtract(2, "hours"),
+    props.booking.date
   );
 
   const showChip = isCurrent || isNext;
@@ -68,7 +66,6 @@ export default function Booking(props: Props) {
           }}
           className="flex flex-col p-4 rounded-md w-full"
           id={props.booking.id}
-          ref={props.anchorRef}
         >
           <CardActionArea onClick={onClick}>
             <div

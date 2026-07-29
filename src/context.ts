@@ -14,11 +14,13 @@ interface IContext {
   };
   phoneBook: {
     entry: PhoneBookEntry | null;
+    error: Error | null;
     loading: boolean;
     setEntry: (entry: PhoneBookEntry | null) => void;
   };
   congregation: {
     data: Congregation | null;
+    error: Error | null;
     loading: boolean;
   };
 }
@@ -31,11 +33,13 @@ export const Context = createContext<IContext>({
   },
   phoneBook: {
     entry: null,
+    error: null,
     loading: true,
     setEntry: () => undefined,
   },
   congregation: {
     data: null,
+    error: null,
     loading: true,
   },
 });

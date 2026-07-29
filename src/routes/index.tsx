@@ -76,7 +76,6 @@ function getAuthErrorMessage(error: unknown) {
 function LoginPage() {
   const navigate = useNavigate();
   const context = useContext(Context);
-  const authEnabled = context.congregation.data?.auth;
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
@@ -86,16 +85,10 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (context.congregation.loading) return;
-
-    if (authEnabled === false) {
-      navigate({ to: "/inicio" });
-      return;
-    }
-
     if (
       !context.auth.loading &&
       !context.phoneBook.loading &&
+      !context.phoneBook.error &&
       context.auth.user
     ) {
       navigate({
@@ -103,11 +96,10 @@ function LoginPage() {
       });
     }
   }, [
-    authEnabled,
-    context.congregation.loading,
     context.auth.loading,
     context.auth.user,
     context.phoneBook.entry,
+    context.phoneBook.error,
     context.phoneBook.loading,
     navigate,
   ]);
@@ -174,7 +166,10 @@ function LoginPage() {
     }
   };
 
-  if (context.congregation.loading || context.auth.loading) {
+  if (
+    context.auth.loading ||
+    (context.auth.user && context.phoneBook.loading)
+  ) {
     return (
       <Backdrop open>
         <CircularProgress />
@@ -182,7 +177,11 @@ function LoginPage() {
     );
   }
 
-  if (!context.congregation.data) {
+  if (
+    context.auth.user &&
+    context.phoneBook.entry &&
+    !context.congregation.data
+  ) {
     return (
       <div className="px-4 flex h-screen items-center justify-center">
         <Alert severity="error">
@@ -196,9 +195,6 @@ function LoginPage() {
     <div className="px-4 flex flex-col gap-2 h-screen justify-center">
       <Typography variant="h4" component="h1">
         Testemunho Público
-      </Typography>
-      <Typography variant="body1" component="p" gutterBottom>
-        Jardim Esplanada
       </Typography>
 
       <Stack spacing={2}>

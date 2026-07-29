@@ -36,7 +36,7 @@ export function groupByDates(bookings: Array<Booking>, backwardsRange: number) {
   );
 
   const grouped = _.groupBy(dateFilteredBookings, (booking) =>
-    booking.date.startOf("day")
+    booking.date.format("YYYY-MM-DD")
   );
 
   return { grouped, dates: Object.keys(grouped) };
@@ -67,7 +67,9 @@ export function getLastBookingForDevices(bookings: Array<Booking>) {
 
 export function getUniqueUsers(bookings: Array<Booking>) {
   const owners = bookings.map((booking) => booking.name);
-  const partners = bookings.map((booking) => booking.partner);
+  const partners = bookings
+    .map((booking) => booking.partner)
+    .filter((partner): partner is string => Boolean(partner));
 
   return _.uniq([...owners, ...partners]);
 }

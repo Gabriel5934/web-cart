@@ -2,11 +2,15 @@ import {
   Paper,
   BottomNavigation,
   BottomNavigationAction,
+  Alert,
   Backdrop,
+  Box,
   CircularProgress,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import LogoutIcon from "@mui/icons-material/Logout";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import {
   createFileRoute,
   Outlet,
@@ -19,7 +23,7 @@ import { signOut } from "firebase/auth";
 import toast from "react-hot-toast";
 import { auth } from "@/firebase/firebase";
 
-const routes = ["/inicio"] as const;
+const routes = ["/inicio", "/localizar", "/reservar"] as const;
 
 export const Route = createFileRoute("/_bottomNav")({
   component: BottomNavLayout,
@@ -31,7 +35,6 @@ function BottomNavLayout() {
   const pathIndex = routes.indexOf(pathname as (typeof routes)[number]);
   const [tab, setTab] = useState(pathIndex);
   const context = useContext(Context);
-  const authEnabled = context.congregation.data?.auth;
 
   const changeTab = (_event: unknown, tab: number) => {
     if (tab === routes.length) {
@@ -61,15 +64,14 @@ function BottomNavLayout() {
     if (
       !context.auth.loading &&
       !context.phoneBook.loading &&
-      !context.auth.user &&
-      authEnabled
+      !context.auth.user
     ) {
       navigate({ to: "/" });
     } else if (
       context.auth.user &&
       !context.phoneBook.loading &&
       !context.phoneBook.entry &&
-      authEnabled
+      !context.phoneBook.error
     ) {
       navigate({ to: "/complete-profile" });
     }
@@ -77,17 +79,36 @@ function BottomNavLayout() {
     context.auth.loading,
     context.auth.user,
     context.phoneBook.entry,
+    context.phoneBook.error,
     context.phoneBook.loading,
     navigate,
-    authEnabled,
   ]);
+
+  if (context.phoneBook.error || context.congregation.error) {
+    return (
+      <Box
+        sx={{
+          alignItems: "center",
+          display: "flex",
+          minHeight: "100vh",
+          px: 2,
+        }}
+      >
+        <Alert severity="error" sx={{ width: "100%" }}>
+          Não foi possível carregar os dados do usuário ou da congregação.
+          Atualize a página e tente novamente.
+        </Alert>
+      </Box>
+    );
+  }
 
   if (
     context.auth.loading ||
     context.congregation.loading ||
     !context.congregation.data ||
     context.phoneBook.loading ||
-    (authEnabled && (!context.auth.user || !context.phoneBook.entry))
+    !context.auth.user ||
+    !context.phoneBook.entry
   ) {
     return (
       <Backdrop onClick={() => {}} open>
@@ -111,9 +132,15 @@ function BottomNavLayout() {
       >
         <BottomNavigation showLabels value={tab} onChange={changeTab}>
           <BottomNavigationAction label="Início" icon={<HomeIcon />} />
-          {authEnabled && context.auth.user && (
-            <BottomNavigationAction label="Sair" icon={<LogoutIcon />} />
-          )}
+          <BottomNavigationAction
+            label="Localizar"
+            icon={<LocationOnIcon />}
+          />
+          <BottomNavigationAction
+            label="Reservar"
+            icon={<EventAvailableIcon />}
+          />
+          <BottomNavigationAction label="Sair" icon={<LogoutIcon />} />
         </BottomNavigation>
       </Paper>
     </>

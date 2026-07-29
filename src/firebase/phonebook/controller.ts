@@ -9,12 +9,14 @@ export function usePhoneBook(phoneNumber?: string | null) {
   const [resolvedPhoneNumber, setResolvedPhoneNumber] = useState<string | null>(
     null
   );
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let active = true;
 
     const getEntry = async () => {
       setEntry(null);
+      setError(null);
 
       if (!phoneNumber) {
         setResolvedPhoneNumber(null);
@@ -32,6 +34,13 @@ export function usePhoneBook(phoneNumber?: string | null) {
         }
       } catch (error) {
         console.error("Error loading phone-book profile:", error);
+        if (active) {
+          setError(
+            error instanceof Error
+              ? error
+              : new Error("Failed to load phone-book profile")
+          );
+        }
       } finally {
         if (active) {
           setResolvedPhoneNumber(phoneNumber);
@@ -48,11 +57,13 @@ export function usePhoneBook(phoneNumber?: string | null) {
   }, [phoneNumber]);
 
   const saveEntry = async (nextEntry: PhoneBookEntry) => {
-    await setDoc(doc(db, "phone-book", nextEntry.phoneNumber), {
+    const entryRef = doc(db, "phone-book", nextEntry.phoneNumber);
+    const existingEntry = await getDoc(entryRef);
+    await setDoc(entryRef, {
       ...nextEntry,
-      createdAt: serverTimestamp(),
+      ...(existingEntry.exists() ? {} : { createdAt: serverTimestamp() }),
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
     setEntry(nextEntry);
     setResolvedPhoneNumber(nextEntry.phoneNumber);
   };
@@ -61,6 +72,7 @@ export function usePhoneBook(phoneNumber?: string | null) {
 
   return {
     entry: isCurrentDocument ? entry : null,
+    error: isCurrentDocument ? error : null,
     loading: loading || !isCurrentDocument,
     saveEntry,
     setEntry,

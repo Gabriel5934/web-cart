@@ -15,21 +15,19 @@ function RootLayout() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const deployCongregationId =
-    import.meta.env.VITE_DEPLOY === "esplanada"
-      ? "jardim-esplanada"
-      : import.meta.env.VITE_DEPLOY;
   const {
     entry: phoneBookEntry,
+    error: phoneBookError,
     loading: phoneBookLoading,
     setEntry: setPhoneBookEntry,
   } = usePhoneBook(user?.phoneNumber);
-  const congregationId =
-    phoneBookEntry?.congregation ?? deployCongregationId;
+  const congregationId = phoneBookEntry?.congregation;
   const {
     congregation,
+    error: congregationError,
     loading: congregationLoading,
-  } = useCongregation(congregationId);
+  } =
+    useCongregation(congregationId);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -49,11 +47,13 @@ function RootLayout() {
             auth: { loading: authLoading, user, setUser },
             phoneBook: {
               entry: phoneBookEntry,
+              error: phoneBookError,
               loading: phoneBookLoading,
               setEntry: setPhoneBookEntry,
             },
             congregation: {
               data: congregation,
+              error: congregationError,
               loading: congregationLoading,
             },
           }}

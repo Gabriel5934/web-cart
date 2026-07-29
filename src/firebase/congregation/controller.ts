@@ -7,12 +7,14 @@ export function useCongregation(id?: string | null) {
   const [congregation, setCongregation] = useState<Congregation | null>(null);
   const [loading, setLoading] = useState(Boolean(id));
   const [resolvedId, setResolvedId] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let active = true;
 
     const getCongregation = async () => {
       setCongregation(null);
+      setError(null);
 
       if (!id) {
         setResolvedId(null);
@@ -37,6 +39,13 @@ export function useCongregation(id?: string | null) {
         }
       } catch (error) {
         console.error("Error loading congregation:", error);
+        if (active) {
+          setError(
+            error instanceof Error
+              ? error
+              : new Error("Failed to load congregation")
+          );
+        }
       } finally {
         if (active) {
           setResolvedId(id);
@@ -52,10 +61,19 @@ export function useCongregation(id?: string | null) {
     };
   }, [id]);
 
+  if (!id) {
+    return {
+      congregation: null,
+      error: null,
+      loading: false,
+    };
+  }
+
   const isCurrentDocument = resolvedId === (id ?? null);
 
   return {
     congregation: isCurrentDocument ? congregation : null,
+    error: isCurrentDocument ? error : null,
     loading: loading || !isCurrentDocument,
   };
 }
