@@ -37,7 +37,7 @@ function LocalizarPage() {
           <Stack spacing={1}>
             <Alert severity="info">
               {
-                'Para informar que você devolveu o carrinho ou display no salão, clique na sua reserva na tela de Início e depois em "Devolver"'
+                'Para informar que você devolveu o carrinho ou display no salão, use "Devolver" na seção "Minhas Reservas".'
               }
             </Alert>
             {devices.map((key) => (

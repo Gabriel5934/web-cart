@@ -25,23 +25,6 @@ export function formatBookings(
   return bookings;
 }
 
-export function groupByDates(bookings: Array<Booking>, backwardsRange: number) {
-  const dateFilteredBookings = _.orderBy(
-    bookings.filter((booking) =>
-      booking.date.isSameOrAfter(
-        dayjs().startOf("day").subtract(backwardsRange, "day")
-      )
-    ),
-    "initialTime"
-  );
-
-  const grouped = _.groupBy(dateFilteredBookings, (booking) =>
-    booking.date.format("YYYY-MM-DD")
-  );
-
-  return { grouped, dates: Object.keys(grouped) };
-}
-
 export function getBookingsWithinWindow(
   bookings: Array<Booking>,
   backwardsRange: number

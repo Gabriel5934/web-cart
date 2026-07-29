@@ -123,7 +123,7 @@ function BottomNavLayout() {
       <Paper
         sx={{
           position: "fixed",
-          bottom: import.meta.env.DEV ? "50px" : 0,
+          bottom: 0,
           left: 0,
           right: 0,
         }}
@@ -132,10 +132,7 @@ function BottomNavLayout() {
       >
         <BottomNavigation showLabels value={tab} onChange={changeTab}>
           <BottomNavigationAction label="Início" icon={<HomeIcon />} />
-          <BottomNavigationAction
-            label="Localizar"
-            icon={<LocationOnIcon />}
-          />
+          <BottomNavigationAction label="Localizar" icon={<LocationOnIcon />} />
           <BottomNavigationAction
             label="Reservar"
             icon={<EventAvailableIcon />}

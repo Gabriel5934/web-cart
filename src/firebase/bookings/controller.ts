@@ -12,14 +12,12 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import _ from "lodash";
 import { Booking, BookingDoc } from "./types";
 import {
   formatBookings,
   getBookingsWithinWindow,
   getLastBookingForDevices,
   getUniqueUsers,
-  groupByDates,
 } from "./service";
 import toast from "react-hot-toast";
 import { Context } from "@/context";
@@ -40,10 +38,6 @@ export function useBookings(
   const congregationId = context.phoneBook.entry?.congregation;
   const [bookings, setBookings] = useState<Array<Booking>>([]);
   const [loading, setLoading] = useState(true);
-  const [dates, setDates] = useState<Array<keyof _.Dictionary<Booking[]>>>([]);
-  const [bookingsByDate, setBookingsByDate] = useState<_.Dictionary<Booking[]>>(
-    {}
-  );
   const [lastBookings, setLastBookings] = useState<
     Record<string, Booking | undefined>
   >({});
@@ -55,10 +49,7 @@ export function useBookings(
   const requestIdRef = useRef(0);
 
   const fetchData = useCallback(
-    async (options: {
-      backwardsRange?: number;
-      user?: string;
-    }) => {
+    async () => {
       const requestId = ++requestIdRef.current;
       const isActive = () => requestId === requestIdRef.current;
 
@@ -68,8 +59,6 @@ export function useBookings(
         if (!congregationId) {
           if (isActive()) {
             setBookings([]);
-            setBookingsByDate({});
-            setDates([]);
             setLastBookings({});
             setUniqueUsers([]);
             setBookingsWithinWindow([]);
@@ -87,30 +76,17 @@ export function useBookings(
         if (!isActive()) return;
 
         const bookings = formatBookings(querySnapshot);
-        const filteredByUser = options.user
-          ? bookings.filter(
-              (booking) =>
-                booking.name === options.user ||
-                booking.partner === options.user
-            )
-          : bookings;
-        const { grouped, dates } = groupByDates(
-          filteredByUser,
-          options.backwardsRange ?? initialBackwardsRange ?? 0
-        );
-        const toBeLastBookings = getLastBookingForDevices(filteredByUser);
+        const toBeLastBookings = getLastBookingForDevices(bookings);
         if (showSucces) {
-          toast.success(`${filteredByUser.length} reservas encontradas`);
+          toast.success(`${bookings.length} reservas encontradas`);
         }
-        const toBeUniqueUsers = getUniqueUsers(filteredByUser);
+        const toBeUniqueUsers = getUniqueUsers(bookings);
         const toBeBookingsWithinWindow = getBookingsWithinWindow(
-          filteredByUser,
-          options.backwardsRange ?? initialBackwardsRange ?? 0
+          bookings,
+          initialBackwardsRange ?? 0
         );
 
-        setBookings(filteredByUser);
-        setBookingsByDate(grouped);
-        setDates(dates);
+        setBookings(bookings);
         setLastBookings(toBeLastBookings);
         setUniqueUsers(toBeUniqueUsers);
         setBookingsWithinWindow(toBeBookingsWithinWindow);
@@ -169,7 +145,7 @@ export function useBookings(
   }
 
   useEffect(() => {
-    void fetchData({});
+    void fetchData();
 
     return () => {
       requestIdRef.current += 1;
@@ -179,8 +155,6 @@ export function useBookings(
   return {
     loading,
     bookings,
-    bookingsByDate,
-    dates,
     lastBookings,
     newBooking,
     refresh: fetchData,

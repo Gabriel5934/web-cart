@@ -1,58 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Backdrop,
-  Box,
-  Button,
-  Chip,
-  Drawer,
-  Fab,
-  Fade,
-  FormControlLabel,
-  Modal,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from "@mui/material";
-import dayjs, { Dayjs } from "dayjs";
+import { Box, Button, Chip, Fab, Stack, Typography } from "@mui/material";
+import { WhatsApp } from "@mui/icons-material";
+import dayjs from "dayjs";
 import "dayjs/locale/pt-br";
-import { useContext, useEffect, useState } from "react";
+import duration from "dayjs/plugin/duration";
+import isBetween from "dayjs/plugin/isBetween";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { useContext } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import toast from "react-hot-toast";
 
-import isBetween from "dayjs/plugin/isBetween";
-import duration from "dayjs/plugin/duration";
-import isToday from "dayjs/plugin/isToday";
-import relativeTime from "dayjs/plugin/relativeTime";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useBookings } from "@/firebase/bookings/controller";
-import { History, WhatsApp } from "@mui/icons-material";
 import Booking from "@/components/Booking";
 import { Context } from "@/context";
-
-interface Booking {
-  id: string;
-  device: string;
-  name: string;
-  partner: string;
-  place: string;
-  date: Dayjs;
-  returned: boolean;
-}
+import { useBookings } from "@/firebase/bookings/controller";
+import type { Booking as BookingData } from "@/firebase/bookings/types";
 
 dayjs.locale("pt-br");
 dayjs.extend(isBetween);
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
-dayjs.extend(isToday);
-
-interface RefreshOptions {
-  backwardsRange: number;
-  user: string | undefined;
-}
 
 const kebabToTitleCase = (value: string) =>
   value
@@ -65,85 +32,124 @@ export const Route = createFileRoute("/_bottomNav/inicio")({
   component: InicioPage,
 });
 
+function BookingList({
+  bookings,
+  actionLabel,
+  emptyMessage,
+  onAction,
+  showDateInsideCard = false,
+}: {
+  bookings: BookingData[];
+  actionLabel?: (booking: BookingData) => string;
+  emptyMessage: string;
+  onAction?: (booking: BookingData) => void;
+  showDateInsideCard?: boolean;
+}) {
+  if (bookings.length === 0) {
+    return (
+      <Stack alignItems="center">
+        <Typography variant="overline" color="gray">
+          {emptyMessage}
+        </Typography>
+      </Stack>
+    );
+  }
+
+  if (showDateInsideCard) {
+    return bookings.map((booking, index) => (
+      <Booking
+        actionLabel={actionLabel?.(booking)}
+        booking={booking}
+        index={index}
+        key={booking.id}
+        onAction={onAction}
+        showDate
+      />
+    ));
+  }
+
+  const grouped = bookings.reduce<Record<string, BookingData[]>>(
+    (dates, booking) => {
+      const date = booking.date.format("YYYY-MM-DD");
+      dates[date] = [...(dates[date] ?? []), booking];
+      return dates;
+    },
+    {},
+  );
+
+  return Object.entries(grouped).map(([date, dateBookings], index) => (
+    <Box key={date}>
+      <Typography variant="h6">
+        {dateBookings?.[0]?.date.isSame(dayjs(), "day") && (
+          <Chip color="warning" label="Hoje" sx={{ mr: 1, mb: 1 }} />
+        )}
+        {dayjs(date).format("D [de] MMMM, dddd")}
+      </Typography>
+      {dateBookings?.map((booking) => (
+        <Booking
+          actionLabel={actionLabel?.(booking)}
+          booking={booking}
+          index={index}
+          key={booking.id}
+          onAction={onAction}
+        />
+      ))}
+    </Box>
+  ));
+}
+
 function InicioPage() {
-  const {
-    dates,
-    bookingsByDate,
-    loading,
-    refresh,
-    deleteData,
-    toggleReturned,
-  } = useBookings(false, true);
+  const { bookings, loading, refresh, deleteData, toggleReturned } =
+    useBookings(false, true);
   const context = useContext(Context);
   const congregation = context.congregation.data;
+  const displayName = context.phoneBook.entry?.displayName;
+  const now = dayjs();
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [returnModal, setReturnModal] = useState(false);
-  const [drawerBooking, setDrawerBooking] = useState<Booking>();
-  const [safeDeleteText, setSafeDeleteText] = useState("");
-  const [options, setOptions] = useState<RefreshOptions>({
-    backwardsRange: 0,
-    user: undefined,
-  });
-
-  const refreshWithOptions = () => {
-    refresh(options);
-  };
-
-  const toggleHistory = () => {
-    const newOptions = {
-      ...options,
-      backwardsRange: options.backwardsRange === 30 ? 0 : 30,
-    };
-
-    setOptions(newOptions);
-    refresh(newOptions);
-  };
-
-  const toggleOnlyMine = (value: boolean) => {
-    const newOptions = {
-      ...options,
-      user: value
-        ? (context.phoneBook.entry?.displayName ?? undefined)
-        : undefined,
-    };
-
-    setOptions(newOptions);
-    refresh(newOptions);
-  };
-
-  const deleteBooking = async (id: string) => {
-    await deleteData(id);
-
-    setDrawerOpen(false);
-    refreshWithOptions();
-  };
-
-  const toggleReturn = async (id: string) => {
-    if (!drawerBooking) return;
-
-    await toggleReturned(id);
-
-    setReturnModal(false);
-    refreshWithOptions();
-  };
-
-  const scrollTargetBookingId = dates
-    .flatMap((date) => bookingsByDate[date] ?? [])
-    .find(
+  const upcomingBookings = bookings
+    .filter(
       (booking) =>
-        dayjs().isBetween(booking.date, booking.date.add(2, "hour")) ||
-        dayjs().isBetween(booking.date.subtract(2, "hour"), booking.date),
-    )?.id;
+        booking.date.add(2, "hour").isAfter(now) &&
+        booking.name !== displayName &&
+        booking.partner !== displayName,
+    )
+    .sort((a, b) => a.date.valueOf() - b.date.valueOf());
+  const myBookings = bookings.filter(
+    (booking) =>
+      booking.name === displayName || booking.partner === displayName,
+  );
+  const myUpcomingBookings = myBookings
+    .filter((booking) => booking.date.add(2, "hour").isAfter(now))
+    .sort((a, b) => a.date.valueOf() - b.date.valueOf());
+  const lastPastBooking = myBookings
+    .filter((booking) => !booking.date.add(2, "hour").isAfter(now))
+    .sort((a, b) => b.date.valueOf() - a.date.valueOf())[0];
 
-  useEffect(() => {
-    if (!scrollTargetBookingId) return;
+  const cancelBooking = async (booking: BookingData) => {
+    const confirmed = window.confirm(
+      `Tem certeza de que deseja cancelar a reserva de ${booking.device} em ${booking.date.format("DD/MM/YYYY [às] HH:mm")}?`,
+    );
 
-    document.getElementById(scrollTargetBookingId)?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }, [scrollTargetBookingId]);
+    if (!confirmed) return;
+
+    try {
+      await deleteData(booking.id);
+      await refresh();
+    } catch (error) {
+      console.error("Error cancelling booking:", error);
+      toast.error("Não foi possível cancelar a reserva. Tente novamente.");
+    }
+  };
+
+  const returnBooking = async (booking: BookingData) => {
+    try {
+      await toggleReturned(booking.id);
+      await refresh();
+    } catch (error) {
+      console.error("Error returning booking:", error);
+      toast.error("Não foi possível atualizar a devolução. Tente novamente.");
+    }
+  };
 
   return (
     <>
@@ -156,7 +162,7 @@ function InicioPage() {
           variant="extended"
           sx={{
             position: "fixed",
-            bottom: import.meta.env.DEV ? 138 : 88,
+            bottom: 88,
             right: 16,
           }}
           color="success"
@@ -166,97 +172,25 @@ function InicioPage() {
         </Fab>
       </a>
 
-      <Drawer
-        open={drawerOpen}
-        anchor="bottom"
-        onClose={() => {
-          setSafeDeleteText("");
-          setDrawerOpen(false);
-        }}
-      >
-        <Box
-          sx={(theme) => ({
-            bgcolor: theme.palette.primary.main,
-            color: "white",
-          })}
-          className="px-4 pt-16 pb-8"
-        >
-          <div className="flex justify-between items-center capitalize">
-            <Typography variant="h6">
-              {drawerBooking?.device} - {drawerBooking?.place}
-            </Typography>
-          </div>
-          <div className="flex gap-4">
-            <Typography variant="h5">
-              {drawerBooking?.date.format("HH:mm")}
-              {" - "}
-              {drawerBooking?.date.add(2, "hour").format("HH:mm")}
-            </Typography>
-            <Typography variant="h5">
-              {drawerBooking?.name} e {drawerBooking?.partner}
-            </Typography>
-          </div>
-        </Box>
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6">Zona de Perigo</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <div className="flex flex-col gap-2">
-              <Typography className="mb-2">
-                {`Digite "${congregation?.safeDeleteText ?? ""}" para deletar essa reserva`}
-              </Typography>
-              <div>
-                <TextField
-                  label="Digite aqui"
-                  size="small"
-                  value={safeDeleteText}
-                  onChange={(e) => setSafeDeleteText(e.target.value)}
-                />
-              </div>
-              <div>
-                <Button
-                  color="error"
-                  variant="contained"
-                  disabled={safeDeleteText !== congregation?.safeDeleteText}
-                  onClick={() => deleteBooking(drawerBooking?.id ?? "")}
-                >
-                  deletar
-                </Button>
-              </div>
-            </div>
-          </AccordionDetails>
-        </Accordion>
-      </Drawer>
-
       <div className="inline-block overflow-hidden relative w-full">
         <img
           className="pointer-events-none absolute w-full -z-10"
           src={congregation?.backgroundImage}
           alt="Testemunho público"
           style={{
-            filter: "brightness(25%)",
+            filter: "brightness(33%)",
             height: "215px",
             objectFit: "cover",
           }}
         />
-        <div className="px-8 py-8 flex flex-col gap-8">
-          <div>
-            <Typography variant="h6" color="white">
-              {kebabToTitleCase(
-                context.phoneBook.entry?.congregation ?? congregation?.id ?? "",
-              )}
-            </Typography>
-            <Typography variant="h5" color="white" className="capitalize">
-              {context.phoneBook.entry?.displayName ?? "Testemunho Público"}
-            </Typography>
-          </div>
+        <div className="px-8 py-8 flex flex-col gap-4">
+          <Typography variant="h6" color="white">
+            {kebabToTitleCase(
+              context.phoneBook.entry?.congregation ?? congregation?.id ?? "",
+            )}
+          </Typography>
           <Typography variant="h5" color="white" className="capitalize">
-            {dayjs().format("dddd")}
-            {", "}
-            {dayjs().format("D")}
-            {" de "}
-            {dayjs().format("MMMM")}
+            {dayjs().format("dddd, D [de] MMMM")}
           </Typography>
           <Link to="/reservar">
             <Button variant="contained" size="large">
@@ -266,116 +200,61 @@ function InicioPage() {
         </div>
       </div>
 
-      <Box sx={{ paddingX: 4 }}>
-        <Stack sx={{ marginBottom: 2 }} gap={1}>
-          <Typography variant="h4">Próximas Reservas</Typography>
-          <div>
-            <Button
-              variant="outlined"
-              startIcon={<History />}
-              onClick={toggleHistory}
-            >
-              ver {options.backwardsRange === 30 ? "menos" : "mais"}
-            </Button>
-          </div>
-          <div>
-            <FormControlLabel
-              control={
-                <Switch
-                  onChange={(e) => toggleOnlyMine(e.target.checked)}
-                  checked={
-                    options.user === context.phoneBook.entry?.displayName
-                  }
+      <Box sx={{ paddingX: 4, paddingTop: 2 }}>
+        <Stack spacing={3}>
+          <section>
+            <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
+              {displayName
+                ? `Reservas de ${displayName?.split(" ")[0]}`
+                : "Suas reservas"}
+            </Typography>
+            {loading ? (
+              <Skeleton height={100} width="100%" count={3} />
+            ) : (
+              <Stack spacing={2}>
+                {lastPastBooking && (
+                  <>
+                    <Typography variant="h6">Última reserva</Typography>
+                    <Booking
+                      actionLabel={
+                        lastPastBooking.returned
+                          ? "Devolvido (alterar)"
+                          : `Devolver ${lastPastBooking.device.split(" ")[0]}`
+                      }
+                      booking={lastPastBooking}
+                      index={0}
+                      onAction={(booking) => void returnBooking(booking)}
+                      showDate
+                    />
+                  </>
+                )}
+                <Typography variant="h6">Próximas reservas</Typography>
+                <BookingList
+                  bookings={myUpcomingBookings}
+                  actionLabel={() => "Cancelar"}
+                  emptyMessage="Nenhuma reserva futura"
+                  onAction={(booking) => void cancelBooking(booking)}
+                  showDateInsideCard
                 />
-              }
-              label="Somente minhas reservas"
-            />
-          </div>
-        </Stack>
+              </Stack>
+            )}
+          </section>
 
-        <Stack spacing={2}>
-          {loading && <Skeleton height={100} width={"100%"} count={5} />}
-          {!loading &&
-            dates.length > 0 &&
-            dates.map((date, index) => (
-              <Box key={date}>
-                <Typography variant="h6">
-                  {dayjs(new Date(date)).isToday() && (
-                    <Chip color="warning" label="Hoje" sx={{ mr: 1, mb: 1 }} />
-                  )}
-                  {dayjs(new Date(date)).format("D")}
-                  {" de "}
-                  {dayjs(new Date(date)).format("MMMM")}
-                  {", "}
-                  {dayjs(new Date(date)).format("dddd")}
-                </Typography>
-                {bookingsByDate[date].map((booking) => (
-                  <Booking
-                    booking={booking}
-                    setDrawerBooking={setDrawerBooking}
-                    setDrawerOpen={setDrawerOpen}
-                    setReturnModal={setReturnModal}
-                    key={booking.date.toISOString()}
-                    index={index}
-                  />
-                ))}
-              </Box>
-            ))}
-          {dates.length === 0 && !loading && (
-            <Stack alignItems="center">
-              <Typography variant="overline" color="gray">
-                Nenhuma reserva encontrada
-              </Typography>
-            </Stack>
-          )}
+          <section>
+            <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
+              Outras Reservas
+            </Typography>
+            {loading ? (
+              <Skeleton height={100} width="100%" count={5} />
+            ) : (
+              <BookingList
+                bookings={upcomingBookings}
+                emptyMessage="Nenhuma reserva encontrada"
+              />
+            )}
+          </section>
         </Stack>
       </Box>
-
-      <Modal
-        open={returnModal}
-        onClose={() => setReturnModal(false)}
-        closeAfterTransition
-        slots={{ backdrop: Backdrop }}
-        slotProps={{
-          backdrop: {
-            timeout: 500,
-          },
-        }}
-      >
-        <Fade in={returnModal}>
-          <Box
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: 400,
-              bgcolor: "background.paper",
-              boxShadow: 24,
-              p: 4,
-            }}
-          >
-            <Stack spacing={1}>
-              <Typography variant="h6" component="h2">
-                Devolver {drawerBooking?.device}
-              </Typography>
-              <Typography sx={{ mt: 2 }}>
-                Clique nesse botão apenas se você{" "}
-                {drawerBooking?.returned && "não"} <strong>devolveu</strong> o
-                carrinho no salão
-              </Typography>
-              <Box sx={{ textAlign: "right" }}>
-                <Button
-                  variant="contained"
-                  onClick={() => toggleReturn(drawerBooking?.id ?? "")}
-                >
-                  {drawerBooking?.returned && "não"} devolvi
-                </Button>
-              </Box>
-            </Stack>
-          </Box>
-        </Fade>
-      </Modal>
     </>
   );
 }

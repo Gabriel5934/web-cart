@@ -8,13 +8,15 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { object, string } from "yup";
 import toast from "react-hot-toast";
 import { Context } from "@/context";
 import { usePhoneBook } from "@/firebase/phonebook/controller";
 import type { PhoneBookEntry } from "@/firebase/phonebook/types";
+import { signOut } from "firebase/auth";
+import { auth } from "@/firebase/firebase";
 
 export const Route = createFileRoute("/complete-profile")({
   component: CompleteProfilePage,
@@ -38,6 +40,22 @@ function CompleteProfilePage() {
   const navigate = useNavigate();
   const context = useContext(Context);
   const { saveEntry } = usePhoneBook();
+  const [isChangingPhoneNumber, setIsChangingPhoneNumber] = useState(false);
+
+  const changePhoneNumber = async () => {
+    if (isChangingPhoneNumber || formik.isSubmitting) return;
+
+    try {
+      setIsChangingPhoneNumber(true);
+      await signOut(auth);
+      navigate({ to: "/" });
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Não foi possível alterar o celular. Tente novamente.");
+    } finally {
+      setIsChangingPhoneNumber(false);
+    }
+  };
 
   useEffect(() => {
     if (
@@ -69,6 +87,8 @@ function CompleteProfilePage() {
     },
     validationSchema: profileSchema,
     onSubmit: async (values) => {
+      if (isChangingPhoneNumber) return;
+
       const normalizedFirstName = values.firstName.trim().toLowerCase();
       const normalizedLastName = values.lastName.trim().toLowerCase();
       const user = context.auth.user;
@@ -82,6 +102,7 @@ function CompleteProfilePage() {
         authUid: user.uid,
         phoneNumber: user.phoneNumber,
         congregation: "jardim-esplanada",
+        role: "user",
         firstName: normalizedFirstName,
         lastName: normalizedLastName,
         displayName: `${normalizedFirstName} ${normalizedLastName}`,
@@ -137,7 +158,7 @@ function CompleteProfilePage() {
           onBlur={formik.handleBlur}
           error={formik.touched.firstName && Boolean(formik.errors.firstName)}
           helperText={formik.touched.firstName && formik.errors.firstName}
-          disabled={formik.isSubmitting}
+          disabled={formik.isSubmitting || isChangingPhoneNumber}
           fullWidth
         />
         <TextField
@@ -149,16 +170,28 @@ function CompleteProfilePage() {
           onBlur={formik.handleBlur}
           error={formik.touched.lastName && Boolean(formik.errors.lastName)}
           helperText={formik.touched.lastName && formik.errors.lastName}
-          disabled={formik.isSubmitting}
+          disabled={formik.isSubmitting || isChangingPhoneNumber}
           fullWidth
         />
         <Button
           variant="contained"
           fullWidth
           type="submit"
-          disabled={formik.isSubmitting}
+          disabled={formik.isSubmitting || isChangingPhoneNumber}
         >
           {formik.isSubmitting ? <CircularProgress size={24} /> : "Continuar"}
+        </Button>
+        <Button
+          type="button"
+          fullWidth
+          disabled={formik.isSubmitting || isChangingPhoneNumber}
+          onClick={() => void changePhoneNumber()}
+        >
+          {isChangingPhoneNumber ? (
+            <CircularProgress size={24} />
+          ) : (
+            "Alterar celular"
+          )}
         </Button>
       </Stack>
     </div>
