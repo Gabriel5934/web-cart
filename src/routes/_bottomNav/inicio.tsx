@@ -104,19 +104,18 @@ function InicioPage() {
   const context = useContext(Context);
   const congregation = context.congregation.data;
   const displayName = context.phoneBook.entry?.displayName;
+  const phoneNumber = context.auth.user?.phoneNumber;
   const now = dayjs();
 
   const upcomingBookings = bookings
     .filter(
       (booking) =>
         booking.date.add(2, "hour").isAfter(now) &&
-        booking.name !== displayName &&
-        booking.partner !== displayName,
+        booking.owner !== phoneNumber,
     )
     .sort((a, b) => a.date.valueOf() - b.date.valueOf());
   const myBookings = bookings.filter(
-    (booking) =>
-      booking.name === displayName || booking.partner === displayName,
+    (booking) => booking.owner === phoneNumber,
   );
   const myUpcomingBookings = myBookings
     .filter((booking) => booking.date.add(2, "hour").isAfter(now))
