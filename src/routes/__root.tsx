@@ -3,9 +3,11 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { Toaster } from "react-hot-toast";
 import { Context } from "@/context";
 import { User } from "@/firebase/users/types";
+import { LoginPage } from "@/components/LoginPage";
 
 export const Route = createRootRoute({
   component: RootLayout,
+  notFoundComponent: LoginPage,
 });
 
 function RootLayout() {
