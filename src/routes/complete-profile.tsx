@@ -36,6 +36,19 @@ const profileSchema = object({
   lastName: oneWordNameSchema,
 });
 
+const CONGREGATION_BY_SUBDOMAIN: Record<string, string> = {
+  aquarius: "aquarius",
+  esplanada: "jardim-esplanada",
+};
+
+const getCongregationId = () => {
+  const subdomain = window.location.hostname.split(".")[0].split("-").at(-1);
+
+  return (
+    (subdomain && CONGREGATION_BY_SUBDOMAIN[subdomain]) ?? "jardim-esplanada"
+  );
+};
+
 function CompleteProfilePage() {
   const navigate = useNavigate();
   const context = useContext(Context);
@@ -101,7 +114,7 @@ function CompleteProfilePage() {
       const entry: PhoneBookEntry = {
         authUid: user.uid,
         phoneNumber: user.phoneNumber,
-        congregation: "jardim-esplanada",
+        congregation: getCongregationId(),
         role: "user",
         firstName: normalizedFirstName,
         lastName: normalizedLastName,
