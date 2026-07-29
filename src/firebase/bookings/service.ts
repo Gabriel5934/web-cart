@@ -25,23 +25,6 @@ export function formatBookings(
   return bookings;
 }
 
-export function groupByDates(bookings: Array<Booking>, backwardsRange: number) {
-  const dateFilteredBookings = _.orderBy(
-    bookings.filter((booking) =>
-      booking.date.isSameOrAfter(
-        dayjs().startOf("day").subtract(backwardsRange, "day")
-      )
-    ),
-    "initialTime"
-  );
-
-  const grouped = _.groupBy(dateFilteredBookings, (booking) =>
-    booking.date.startOf("day")
-  );
-
-  return { grouped, dates: Object.keys(grouped) };
-}
-
 export function getBookingsWithinWindow(
   bookings: Array<Booking>,
   backwardsRange: number
@@ -67,7 +50,9 @@ export function getLastBookingForDevices(bookings: Array<Booking>) {
 
 export function getUniqueUsers(bookings: Array<Booking>) {
   const owners = bookings.map((booking) => booking.name);
-  const partners = bookings.map((booking) => booking.partner);
+  const partners = bookings
+    .map((booking) => booking.partner)
+    .filter((partner): partner is string => Boolean(partner));
 
   return _.uniq([...owners, ...partners]);
 }

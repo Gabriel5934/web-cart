@@ -33,7 +33,9 @@ yarn-error.log*
 
 # tanstack router (generated)
 src/routeTree.gen.ts
+.tanstack/tmp
 
 # firebase
 firebase-debug.log
 firestore-debug.log
+/firebase-state/

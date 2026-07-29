@@ -3,7 +3,8 @@ import { Alert, Box, Paper, Stack, Typography } from "@mui/material";
 import { useBookings } from "@/firebase/bookings/controller";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { getConstants } from "@/consts";
+import { useContext } from "react";
+import { Context } from "@/context";
 
 export const Route = createFileRoute("/_bottomNav/localizar")({
   component: LocalizarPage,
@@ -11,21 +12,23 @@ export const Route = createFileRoute("/_bottomNav/localizar")({
 
 function LocalizarPage() {
   const { lastBookings, loading } = useBookings(false, true);
-  const { DEVICES } = getConstants();
+  const { devices: congregationDevices = [] } =
+    useContext(Context).congregation.data ?? {};
 
   const devices = Object.keys(lastBookings).filter((key) =>
-    DEVICES.includes(key)
+    congregationDevices.includes(key),
   );
 
   return (
     <>
       <Box
-        sx={(theme) => ({ bgcolor: theme.palette.primary.main })}
+        sx={{
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
+        }}
         className="px-4 pt-20 pb-4"
       >
-        <Typography variant="h4" color="white">
-          Localizar
-        </Typography>
+        <Typography variant="h4">Localizar</Typography>
       </Box>
       <Box sx={{ padding: 4 }}>
         {loading ? (
@@ -34,17 +37,17 @@ function LocalizarPage() {
           <Stack spacing={1}>
             <Alert severity="info">
               {
-                'Para informar que você devolveu o carrinho ou display no salão, clique na sua reserva na tela de Início e depois em "Devolver"'
+                'Para informar que você devolveu o carrinho ou display no salão, use "Devolver" na seção "Minhas Reservas".'
               }
             </Alert>
             {devices.map((key) => (
               <Paper
                 sx={{
                   bgcolor: "primary.main",
-                  color: "white",
+                  color: "primary.contrastText",
                 }}
                 key={key}
-                className="flex flex-col p-4 rounded-md text-white w-full"
+                className="flex flex-col p-4 rounded-md w-full"
               >
                 <Stack spacing={1}>
                   <Typography variant="h5">{key}</Typography>
