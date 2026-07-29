@@ -28,7 +28,6 @@ import duration from "dayjs/plugin/duration";
 import isToday from "dayjs/plugin/isToday";
 import relativeTime from "dayjs/plugin/relativeTime";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useBookings } from "@/firebase/bookings/controller";
 import { History, WhatsApp } from "@mui/icons-material";
 import Booking from "@/components/Booking";
@@ -105,7 +104,7 @@ function InicioPage() {
     const newOptions = {
       ...options,
       user: value
-        ? context.phoneBook.entry?.displayName ?? undefined
+        ? (context.phoneBook.entry?.displayName ?? undefined)
         : undefined,
     };
 
@@ -133,14 +132,8 @@ function InicioPage() {
     .flatMap((date) => bookingsByDate[date] ?? [])
     .find(
       (booking) =>
-        dayjs().isBetween(
-          booking.date,
-          booking.date.add(2, "hour")
-        ) ||
-        dayjs().isBetween(
-          booking.date.subtract(2, "hour"),
-          booking.date
-        )
+        dayjs().isBetween(booking.date, booking.date.add(2, "hour")) ||
+        dayjs().isBetween(booking.date.subtract(2, "hour"), booking.date),
     )?.id;
 
   useEffect(() => {
@@ -225,9 +218,7 @@ function InicioPage() {
                 <Button
                   color="error"
                   variant="contained"
-                  disabled={
-                    safeDeleteText !== congregation?.safeDeleteText
-                  }
+                  disabled={safeDeleteText !== congregation?.safeDeleteText}
                   onClick={() => deleteBooking(drawerBooking?.id ?? "")}
                 >
                   deletar
@@ -253,9 +244,7 @@ function InicioPage() {
           <div>
             <Typography variant="h6" color="white">
               {kebabToTitleCase(
-                context.phoneBook.entry?.congregation ??
-                  congregation?.id ??
-                  ""
+                context.phoneBook.entry?.congregation ?? congregation?.id ?? "",
               )}
             </Typography>
             <Typography variant="h5" color="white" className="capitalize">
@@ -280,7 +269,7 @@ function InicioPage() {
       <Box sx={{ paddingX: 4 }}>
         <Stack sx={{ marginBottom: 2 }} gap={1}>
           <Typography variant="h4">Próximas Reservas</Typography>
-          <div className="flex gap-2">
+          <div>
             <Button
               variant="outlined"
               startIcon={<History />}
@@ -288,11 +277,6 @@ function InicioPage() {
             >
               ver {options.backwardsRange === 30 ? "menos" : "mais"}
             </Button>
-            <Link to="/localizar">
-              <Button variant="outlined" startIcon={<LocationOnIcon />}>
-                localizar
-              </Button>
-            </Link>
           </div>
           <div>
             <FormControlLabel
