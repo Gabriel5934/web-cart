@@ -12,7 +12,6 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const [user, setUser] = useState<User | null>(null);
-
   return (
     <>
       <Toaster />
