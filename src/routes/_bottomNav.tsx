@@ -11,6 +11,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import {
   createFileRoute,
   Outlet,
@@ -23,7 +24,11 @@ import { signOut } from "firebase/auth";
 import toast from "react-hot-toast";
 import { auth } from "@/firebase/firebase";
 
-const routes = ["/inicio", "/localizar", "/reservar"] as const;
+const routes = [
+  { path: "/inicio", label: "Início", icon: <HomeIcon /> },
+  { path: "/localizar", label: "Localizar", icon: <LocationOnIcon /> },
+  { path: "/reservar", label: "Reservar", icon: <EventAvailableIcon /> },
+] as const;
 
 export const Route = createFileRoute("/_bottomNav")({
   component: BottomNavLayout,
@@ -32,18 +37,30 @@ export const Route = createFileRoute("/_bottomNav")({
 function BottomNavLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const pathIndex = routes.indexOf(pathname as (typeof routes)[number]);
-  const [tab, setTab] = useState(pathIndex);
   const context = useContext(Context);
+  const navigationRoutes = context.phoneBook.entry?.role === "admin"
+    ? [
+        ...routes,
+        {
+          path: "/dashboard" as const,
+          label: "Painel",
+          icon: <DashboardOutlinedIcon />,
+        },
+      ]
+    : routes;
+  const pathIndex = navigationRoutes.findIndex(
+    (route) => route.path === pathname,
+  );
+  const [tab, setTab] = useState(pathIndex);
 
   const changeTab = (_event: unknown, tab: number) => {
-    if (tab === routes.length) {
+    if (tab === navigationRoutes.length) {
       void logout();
       return;
     }
 
     setTab(tab);
-    navigate({ to: routes[tab] });
+    navigate({ to: navigationRoutes[tab].path });
   };
 
   const logout = async () => {
@@ -131,12 +148,13 @@ function BottomNavLayout() {
         className="z-50"
       >
         <BottomNavigation showLabels value={tab} onChange={changeTab}>
-          <BottomNavigationAction label="Início" icon={<HomeIcon />} />
-          <BottomNavigationAction label="Localizar" icon={<LocationOnIcon />} />
-          <BottomNavigationAction
-            label="Reservar"
-            icon={<EventAvailableIcon />}
-          />
+          {navigationRoutes.map((route) => (
+            <BottomNavigationAction
+              key={route.path}
+              label={route.label}
+              icon={route.icon}
+            />
+          ))}
           <BottomNavigationAction label="Sair" icon={<LogoutIcon />} />
         </BottomNavigation>
       </Paper>
