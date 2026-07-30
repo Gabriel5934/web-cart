@@ -110,7 +110,7 @@ function InicioPage() {
   const upcomingBookings = bookings
     .filter(
       (booking) =>
-        booking.date.add(2, "hour").isAfter(now) &&
+        !booking.date.isBefore(now.startOf("day")) &&
         booking.owner !== phoneNumber,
     )
     .sort((a, b) => a.date.valueOf() - b.date.valueOf());
