@@ -124,6 +124,21 @@ function LoginPage() {
     return verifierRef.current;
   };
 
+  const resetVerifier = async () => {
+    const verifier = verifierRef.current;
+    if (!verifier) return;
+
+    try {
+      const widgetId = await verifier.render();
+      const recaptchaWindow = window as typeof window & {
+        grecaptcha?: { reset: (id?: number) => void };
+      };
+      recaptchaWindow.grecaptcha?.reset(widgetId);
+    } catch (error) {
+      console.error("Error resetting reCAPTCHA:", error);
+    }
+  };
+
   const sendCode = async () => {
     const normalizedPhone = toE164(phoneNumber);
 
@@ -142,8 +157,7 @@ function LoginPage() {
       setConfirmation(result);
       toast.success("Código enviado por SMS.");
     } catch (error) {
-      verifierRef.current?.clear();
-      verifierRef.current = null;
+      await resetVerifier();
       toast.error(getAuthErrorMessage(error));
     } finally {
       setLoading(false);
@@ -198,6 +212,10 @@ function LoginPage() {
       </Typography>
 
       <Stack spacing={2}>
+        <div
+          id="phone-auth-recaptcha"
+          style={{ display: confirmation ? "none" : "block" }}
+        />
         {!confirmation ? (
           <>
             <Alert severity="info">Informe seu celular com DDD.</Alert>
@@ -214,7 +232,6 @@ function LoginPage() {
               fullWidth
               required
             />
-            <div id="phone-auth-recaptcha" />
             <Button
               variant="contained"
               fullWidth
@@ -260,8 +277,7 @@ function LoginPage() {
                 setConfirmation(null);
                 setVerificationCode("");
                 setPhoneNumber("");
-                verifierRef.current?.clear();
-                verifierRef.current = null;
+                void resetVerifier();
               }}
             >
               Alterar número
