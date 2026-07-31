@@ -7,6 +7,7 @@
     "dev": "vite --host",
     "emulators": "docker compose up --build firebase-emulators",
     "emulators:down": "docker compose down",
+    "phone-book:import": "node scripts/import-phone-book.mjs",
     "routes:generate": "tsr generate",
     "build": "tsr generate && tsc -b && vite build",
     "preview": "vite preview",

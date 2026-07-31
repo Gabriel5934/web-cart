@@ -30,6 +30,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import toast from "react-hot-toast";
 import { Context } from "@/context";
 import { BookingDoc } from "@/firebase/bookings/types";
+import { capitalizeName } from "@/utils/text";
 
 interface Inputs {
   device: string;
@@ -241,10 +242,11 @@ function ReservarPage() {
           <Formik<Inputs>
             initialValues={{
               device: "",
-              name:
+              name: capitalizeName(
                 context.phoneBook.entry?.displayName ??
-                context.auth.user?.displayName ??
-                "",
+                  context.auth.user?.displayName ??
+                  "",
+              ),
               partner: "",
               place: "",
               date: null,

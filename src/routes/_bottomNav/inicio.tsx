@@ -11,10 +11,14 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import toast from "react-hot-toast";
 
-import Booking from "@/components/Booking";
+import RichBooking from "@/components/RichBooking";
+import SimpleBooking from "@/components/SimpleBooking";
+import MeetingCard from "@/components/MeetingCard";
+import MinistryCard from "@/components/MinistryCard";
 import { Context } from "@/context";
 import { useBookings } from "@/firebase/bookings/controller";
 import type { Booking as BookingData } from "@/firebase/bookings/types";
+import { capitalizeName } from "@/utils/text";
 
 dayjs.locale("pt-br");
 dayjs.extend(isBetween);
@@ -28,6 +32,17 @@ const kebabToTitleCase = (value: string) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 
+const timeToMinutes = (time: string) => {
+  const [hours = 0, minutes = 0] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+
+const getGreeting = (hour: number) => {
+  if (hour >= 5 && hour < 12) return "Bom dia";
+  if (hour >= 12 && hour < 18) return "Boa tarde";
+  return "Boa noite";
+};
+
 export const Route = createFileRoute("/_bottomNav/inicio")({
   component: InicioPage,
 });
@@ -37,13 +52,13 @@ function BookingList({
   actionLabel,
   emptyMessage,
   onAction,
-  showDateInsideCard = false,
+  variant,
 }: {
   bookings: BookingData[];
   actionLabel?: (booking: BookingData) => string;
   emptyMessage: string;
   onAction?: (booking: BookingData) => void;
-  showDateInsideCard?: boolean;
+  variant: "rich" | "simple";
 }) {
   if (bookings.length === 0) {
     return (
@@ -55,15 +70,15 @@ function BookingList({
     );
   }
 
-  if (showDateInsideCard) {
+  if (variant === "rich") {
     return bookings.map((booking, index) => (
-      <Booking
+      <RichBooking
         actionLabel={actionLabel?.(booking)}
         booking={booking}
         index={index}
+        inlineDeleteAction
         key={booking.id}
         onAction={onAction}
-        showDate
       />
     ));
   }
@@ -86,13 +101,7 @@ function BookingList({
         {dayjs(date).format("D [de] MMMM, dddd")}
       </Typography>
       {dateBookings?.map((booking) => (
-        <Booking
-          actionLabel={actionLabel?.(booking)}
-          booking={booking}
-          index={index}
-          key={booking.id}
-          onAction={onAction}
-        />
+        <SimpleBooking booking={booking} index={index} key={booking.id} />
       ))}
     </Box>
   ));
@@ -117,12 +126,70 @@ function InicioPage() {
   const myBookings = bookings.filter(
     (booking) => booking.owner === phoneNumber,
   );
+  const todaysBookings = myBookings
+    .filter((booking) => booking.date.isSame(now, "day"))
+    .sort((a, b) => a.date.valueOf() - b.date.valueOf());
   const myUpcomingBookings = myBookings
-    .filter((booking) => booking.date.add(2, "hour").isAfter(now))
+    .filter(
+      (booking) =>
+        !booking.date.isSame(now, "day") &&
+        booking.date.add(2, "hour").isAfter(now),
+    )
     .sort((a, b) => a.date.valueOf() - b.date.valueOf());
   const lastPastBooking = myBookings
-    .filter((booking) => !booking.date.add(2, "hour").isAfter(now))
+    .filter(
+      (booking) =>
+        !booking.date.isSame(now, "day") &&
+        !booking.date.add(2, "hour").isAfter(now),
+    )
     .sort((a, b) => b.date.valueOf() - a.date.valueOf())[0];
+  const meetingIndex = congregation?.meetingsWeekDays?.indexOf(now.day()) ?? -1;
+  const todaysMeetingTime =
+    meetingIndex >= 0 ? congregation?.meetingsTimes?.[meetingIndex] : undefined;
+  const todaysMeetingName =
+    meetingIndex === 0
+      ? "Reunião de meio de semana"
+      : meetingIndex === 1
+        ? "Reunião de final de semana"
+        : "Reunião da congregação";
+  const todaysMinistryArrangements = (
+    congregation?.ministryWeekDays ?? []
+  ).flatMap((weekDay, index) => {
+    const time = congregation?.ministryTimes?.[index];
+
+    if (weekDay !== now.day() || !time) return [];
+
+    return [
+      {
+        meetingPoint: congregation?.ministryMeetingPoints?.[index] ?? 0,
+        time,
+      },
+    ];
+  });
+  const todaysSchedule = [
+    ...todaysBookings.map((booking) => ({
+      booking,
+      kind: "booking" as const,
+      minutes: booking.date.hour() * 60 + booking.date.minute(),
+    })),
+    ...(todaysMeetingTime
+      ? [
+          {
+            kind: "meeting" as const,
+            meetingName: todaysMeetingName,
+            minutes: timeToMinutes(todaysMeetingTime),
+            time: todaysMeetingTime,
+          },
+        ]
+      : []),
+    ...todaysMinistryArrangements.map(({ meetingPoint, time }) => ({
+      kind: "ministry" as const,
+      meetingPoint,
+      minutes: timeToMinutes(time),
+      time,
+    })),
+  ].sort((left, right) => left.minutes - right.minutes);
+  const hasPlansToday = todaysSchedule.length > 0;
 
   const cancelBooking = async (booking: BookingData) => {
     const confirmed = window.confirm(
@@ -202,28 +269,104 @@ function InicioPage() {
       <Box sx={{ paddingX: 4, paddingTop: 2 }}>
         <Stack spacing={3}>
           <section>
-            <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
+            <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
               {displayName
-                ? `Reservas de ${displayName?.split(" ")[0]}`
-                : "Suas reservas"}
+                ? `${getGreeting(now.hour())}, ${capitalizeName(
+                    displayName.split(" ")[0],
+                  )}`
+                : getGreeting(now.hour())}
             </Typography>
             {loading ? (
               <Skeleton height={100} width="100%" count={3} />
             ) : (
               <Stack spacing={2}>
+                {hasPlansToday ? (
+                  <>
+                    {todaysSchedule.map((item, index) => {
+                      if (item.kind === "booking") {
+                        const hasEnded = !item.booking.date
+                          .add(2, "hour")
+                          .isAfter(now);
+
+                        return (
+                          <RichBooking
+                            actionLabel={
+                              hasEnded
+                                ? item.booking.returned
+                                  ? "Devolvido (alterar)"
+                                  : `Devolver ${item.booking.device.split(" ")[0]}`
+                                : "Cancelar"
+                            }
+                            booking={item.booking}
+                            index={index}
+                            inlineDeleteAction={!hasEnded}
+                            key={item.booking.id}
+                            onAction={(selectedBooking) =>
+                              hasEnded
+                                ? void returnBooking(selectedBooking)
+                                : void cancelBooking(selectedBooking)
+                            }
+                            showReturnedChip
+                          />
+                        );
+                      }
+
+                      if (item.kind === "meeting") {
+                        return (
+                          <MeetingCard
+                            date={now}
+                            index={index}
+                            key={`meeting-${item.time}`}
+                            meetingName={item.meetingName}
+                            time={item.time}
+                          />
+                        );
+                      }
+
+                      return (
+                        <MinistryCard
+                          date={now}
+                          index={index}
+                          key={`ministry-${item.time}-${item.meetingPoint}-${index}`}
+                          meetingPoint={item.meetingPoint}
+                          time={item.time}
+                        />
+                      );
+                    })}
+                  </>
+                ) : (
+                  <Typography
+                    variant="overline"
+                    color="gray"
+                    textAlign="center"
+                  >
+                    Nenhuma atividade para hoje
+                  </Typography>
+                )}
                 {lastPastBooking && (
                   <>
-                    <Typography variant="h6">Última reserva</Typography>
-                    <Booking
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography variant="h6">Última reserva</Typography>
+                      <Chip
+                        color={lastPastBooking.returned ? "success" : "error"}
+                        label={
+                          lastPastBooking.returned
+                            ? "Devolvido"
+                            : "Não devolvido"
+                        }
+                        size="small"
+                      />
+                    </Stack>
+                    <RichBooking
                       actionLabel={
                         lastPastBooking.returned
                           ? "Devolvido (alterar)"
                           : `Devolver ${lastPastBooking.device.split(" ")[0]}`
                       }
                       booking={lastPastBooking}
+                      hideTimingChips
                       index={0}
                       onAction={(booking) => void returnBooking(booking)}
-                      showDate
                     />
                   </>
                 )}
@@ -233,7 +376,7 @@ function InicioPage() {
                   actionLabel={() => "Cancelar"}
                   emptyMessage="Nenhuma reserva futura"
                   onAction={(booking) => void cancelBooking(booking)}
-                  showDateInsideCard
+                  variant="rich"
                 />
               </Stack>
             )}
@@ -249,6 +392,7 @@ function InicioPage() {
               <BookingList
                 bookings={upcomingBookings}
                 emptyMessage="Nenhuma reserva encontrada"
+                variant="simple"
               />
             )}
           </section>

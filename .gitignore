@@ -39,3 +39,6 @@ src/routeTree.gen.ts
 firebase-debug.log
 firestore-debug.log
 /firebase-state/
+
+# data dump
+*.csv
