@@ -28,7 +28,8 @@ service cloud.firestore {
           "meetingsTimes",
           "ministryWeekDays",
           "ministryTimes",
-          "ministryMeetingPoints"
+          "ministryMeetingPoints",
+          "announcement"
         ]);
     }
 

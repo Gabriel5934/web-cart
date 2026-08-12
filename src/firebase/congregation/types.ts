@@ -1,4 +1,12 @@
+export interface Announcement {
+  endDate: string;
+  message: string;
+  startDate: string;
+  title: string;
+}
+
 export interface Congregation {
+  announcement?: Announcement;
   backgroundImage: string;
   devices: string[];
   id: string;

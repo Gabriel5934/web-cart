@@ -120,6 +120,36 @@ describe("updateCongregationSchedule", () => {
   });
 });
 
+describe("updateCongregationAnnouncement", () => {
+  const announcement = {
+    title: "Aviso importante",
+    message: "Reunião especial neste fim de semana.",
+    startDate: "2026-08-12",
+    endDate: "2026-08-16",
+  };
+
+  test("allows an admin to update their congregation announcement", async () => {
+    const db = authenticatedDb("admin-a", phoneNumbers.adminA);
+    await assertSucceeds(
+      updateDoc(doc(db, "congregation", "congregation-a"), { announcement }),
+    );
+  });
+
+  test("denies a non-admin announcement update", async () => {
+    const db = authenticatedDb("user-a", phoneNumbers.userA);
+    await assertFails(
+      updateDoc(doc(db, "congregation", "congregation-a"), { announcement }),
+    );
+  });
+
+  test("denies an admin updating another congregation's announcement", async () => {
+    const db = authenticatedDb("admin-b", phoneNumbers.adminB);
+    await assertFails(
+      updateDoc(doc(db, "congregation", "congregation-a"), { announcement }),
+    );
+  });
+});
+
 describe("phone-book protected fields", () => {
   test("allows a user to create a profile in their chosen congregation", async () => {
     const phoneNumber = "+5511999990004";

@@ -1,5 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Box, Button, Chip, Fab, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  Chip,
+  Fab,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { WhatsApp } from "@mui/icons-material";
 import dayjs from "dayjs";
 import "dayjs/locale/pt-br";
@@ -115,6 +124,14 @@ function InicioPage() {
   const displayName = context.phoneBook.entry?.displayName;
   const phoneNumber = context.auth.user?.phoneNumber;
   const now = dayjs();
+  const announcement = congregation?.announcement;
+  const today = now.format("YYYY-MM-DD");
+  const activeAnnouncement =
+    announcement &&
+    announcement.startDate <= today &&
+    announcement.endDate >= today
+      ? announcement
+      : null;
 
   const upcomingBookings = bookings
     .filter(
@@ -276,6 +293,15 @@ function InicioPage() {
                   )}`
                 : getGreeting(now.hour())}
             </Typography>
+            {activeAnnouncement ? (
+              <Alert
+                severity="info"
+                sx={{ mb: 2, whiteSpace: "pre-line" }}
+              >
+                <AlertTitle>{activeAnnouncement.title}</AlertTitle>
+                {activeAnnouncement.message}
+              </Alert>
+            ) : null}
             {loading ? (
               <Skeleton height={100} width="100%" count={3} />
             ) : (

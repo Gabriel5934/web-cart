@@ -1,7 +1,7 @@
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { deleteField, doc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import type { Congregation } from "./types";
+import type { Announcement, Congregation } from "./types";
 
 export type CongregationSchedule = Pick<
   Congregation,
@@ -17,6 +17,15 @@ export async function updateCongregationSchedule(
   schedule: Required<CongregationSchedule>,
 ) {
   await updateDoc(doc(db, "congregation", id), schedule);
+}
+
+export async function updateCongregationAnnouncement(
+  id: string,
+  announcement: Announcement | null,
+) {
+  await updateDoc(doc(db, "congregation", id), {
+    announcement: announcement ?? deleteField(),
+  });
 }
 
 export function useCongregation(id?: string | null) {

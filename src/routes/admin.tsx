@@ -15,6 +15,7 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import CongregationScheduleForm from "@/components/CongregationScheduleForm";
+import CongregationAnnouncementForm from "@/components/CongregationAnnouncementForm";
 import { Context } from "@/context";
 
 export const Route = createFileRoute("/admin")({
@@ -105,6 +106,7 @@ function AdminPage() {
               {context.congregation.data?.name}
             </Typography>
           </Box>
+          <CongregationAnnouncementForm />
           <CongregationScheduleForm />
         </Stack>
       </Container>
