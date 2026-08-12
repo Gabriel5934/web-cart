@@ -2,9 +2,72 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.phone_number is string;
+    }
+
+    function profile() {
+      return get(/databases/$(database)/documents/phone-book/$(request.auth.token.phone_number));
+    }
+
+    function isMemberOf(congregationId) {
+      return isSignedIn()
+        && profile().data.congregation == congregationId;
+    }
+
+    function isAdminOf(congregationId) {
+      return isMemberOf(congregationId)
+        && profile().data.role == "admin";
+    }
+
+    match /congregation/{congregationId} {
+      allow read: if isMemberOf(congregationId);
+      allow update: if isAdminOf(congregationId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "meetingsWeekDays",
+          "meetingsTimes",
+          "ministryWeekDays",
+          "ministryTimes",
+          "ministryMeetingPoints"
+        ]);
+    }
+
+    match /phone-book/{phoneNumber} {
+      function isOwner() {
+        return isSignedIn() && request.auth.token.phone_number == phoneNumber;
+      }
+
+      function protectedProfileFieldsAreUnchanged() {
+        return request.resource.data.role == resource.data.role
+          && request.resource.data.congregation == resource.data.congregation
+          && request.resource.data.phoneNumber == resource.data.phoneNumber
+          && request.resource.data.authUid == resource.data.authUid;
+      }
+
+      allow read: if isOwner()
+        || (isSignedIn() && isAdminOf(resource.data.congregation));
+      allow create: if isOwner()
+        && request.resource.data.role == "user"
+        && request.resource.data.phoneNumber == phoneNumber
+        && request.resource.data.authUid == request.auth.uid;
+      allow update: if protectedProfileFieldsAreUnchanged()
+        && (isOwner() || isAdminOf(resource.data.congregation));
+    }
+
+    match /new-bookings/{bookingId} {
+      allow read: if isMemberOf(resource.data.congregation);
+      allow create: if isMemberOf(request.resource.data.congregation)
+        && request.resource.data.owner == request.auth.token.phone_number;
+      allow update: if (resource.data.owner == request.auth.token.phone_number
+          || isAdminOf(resource.data.congregation))
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["returned"]);
+      allow delete: if isSignedIn()
+        && (resource.data.owner == request.auth.token.phone_number
+          || isAdminOf(resource.data.congregation));
+    }
 
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

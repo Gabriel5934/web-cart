@@ -22,6 +22,7 @@ interface IContext {
     data: Congregation | null;
     error: Error | null;
     loading: boolean;
+    setData: (congregation: Congregation | null) => void;
   };
 }
 
@@ -41,5 +42,6 @@ export const Context = createContext<IContext>({
     data: null,
     error: null,
     loading: true,
+    setData: () => undefined,
   },
 });

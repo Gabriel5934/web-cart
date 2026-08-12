@@ -7,6 +7,7 @@
     "dev": "vite --host",
     "emulators": "docker compose up --build firebase-emulators",
     "emulators:down": "docker compose down",
+    "test:firestore-rules": "firebase emulators:exec --config firebase.test.json --only firestore --project demo-web-cart 'node tests/firestore.rules.test.cjs'",
     "phone-book:import": "node scripts/import-phone-book.mjs",
     "routes:generate": "tsr generate",
     "build": "tsr generate && tsc -b && vite build",
@@ -33,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@firebase/rules-unit-testing": "^3.0.4",
     "@tanstack/router-cli": "^1.167.21",
     "@tanstack/router-plugin": "^1.168.23",
     "@types/lodash": "^4.17.10",
@@ -44,6 +46,7 @@
     "eslint": "^9.13.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
+    "firebase-tools": "^15.24.0",
     "globals": "^17.8.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",

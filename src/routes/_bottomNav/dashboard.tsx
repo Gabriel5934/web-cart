@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   FormControl,
@@ -16,6 +17,7 @@ import {
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
 import DevicesOtherOutlinedIcon from "@mui/icons-material/DevicesOtherOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import dayjs from "dayjs";
 import { Context } from "@/context";
 import { useDashboard } from "@/firebase/dashboard/controller";
@@ -89,10 +91,27 @@ function DashboardPage() {
         sx={{ bgcolor: "primary.main", color: "primary.contrastText" }}
         className="px-4 pt-20 pb-4"
       >
-        <Typography variant="h4" component="h1">
-          Painel administrativo
-        </Typography>
-        <Typography variant="body1">{congregation?.name}</Typography>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          justifyContent="space-between"
+          gap={2}
+        >
+          <Box>
+            <Typography variant="h4" component="h1">
+              Painel administrativo
+            </Typography>
+            <Typography variant="body1">{congregation?.name}</Typography>
+          </Box>
+          <Button
+            color="inherit"
+            startIcon={<SettingsOutlinedIcon />}
+            variant="outlined"
+            onClick={() => navigate({ to: "/admin" })}
+          >
+            Configurar programação
+          </Button>
+        </Stack>
       </Box>
 
       <Box sx={{ p: { xs: 2, sm: 4 } }}>

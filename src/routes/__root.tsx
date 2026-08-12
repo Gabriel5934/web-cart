@@ -26,6 +26,7 @@ function RootLayout() {
     congregation,
     error: congregationError,
     loading: congregationLoading,
+    setCongregation,
   } =
     useCongregation(congregationId);
 
@@ -55,6 +56,7 @@ function RootLayout() {
               data: congregation,
               error: congregationError,
               loading: congregationLoading,
+              setData: setCongregation,
             },
           }}
         >

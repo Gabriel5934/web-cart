@@ -1,7 +1,23 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import type { Congregation } from "./types";
+
+export type CongregationSchedule = Pick<
+  Congregation,
+  | "meetingsWeekDays"
+  | "meetingsTimes"
+  | "ministryWeekDays"
+  | "ministryTimes"
+  | "ministryMeetingPoints"
+>;
+
+export async function updateCongregationSchedule(
+  id: string,
+  schedule: Required<CongregationSchedule>,
+) {
+  await updateDoc(doc(db, "congregation", id), schedule);
+}
 
 export function useCongregation(id?: string | null) {
   const [congregation, setCongregation] = useState<Congregation | null>(null);
@@ -66,6 +82,7 @@ export function useCongregation(id?: string | null) {
       congregation: null,
       error: null,
       loading: false,
+      setCongregation,
     };
   }
 
@@ -75,5 +92,6 @@ export function useCongregation(id?: string | null) {
     congregation: isCurrentDocument ? congregation : null,
     error: isCurrentDocument ? error : null,
     loading: loading || !isCurrentDocument,
+    setCongregation,
   };
 }
